@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigFile.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/07 19:18:24 by trimize           #+#    #+#             */
-/*   Updated: 2024/09/07 22:13:08 by trimize          ###   ########.fr       */
+/*   Updated: 2024/09/10 23:01:00 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,9 +74,33 @@ int		ConfigFile::getBodySize()
 	return(this->bodysize);
 }
 
-void		ConfigFile::setPath(std::string path)
+std::vector<Route>	ConfigFile::getRoutes()
 {
-	this->path = path;
+	return(this->routes);
+}
+
+bool ConfigFile::isPathValid(const std::string & path)
+{
+	std::vector<Route>::iterator it;
+
+	for (it = this->routes.begin(); it != this->routes.end(); it++)
+	{
+		if (it->getPath() == path)
+			return true;
+	}
+	return false;
+}
+
+Route &	ConfigFile::getRoute(std::string & path)
+{
+	std::vector<Route>::iterator it;
+
+	for (it = this->routes.begin(); it != this->routes.end(); it++)
+	{
+		if (it->getPath() == path)
+			return *it;
+	}
+	throw ConfigFile::RouteNotFound();
 }
 
 bool		ConfigFile::isAllDigits(const std::string &str)

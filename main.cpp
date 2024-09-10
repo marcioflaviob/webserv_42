@@ -15,33 +15,25 @@
 #include <iterator>
 #include <iostream>
 
+#include "Route.hpp"
+#include "Response.hpp"
+#include "Enums.hpp"
+#include "ConfigFile.hpp"
+
+Route * mock_route() {
+    std::vector<RequestType> allowedMethods;
+    allowedMethods.push_back(GET);
+    allowedMethods.push_back(POST);
+    allowedMethods.push_back(DELETE);
+    Route * route = new Route("/test", "./", "index.html", allowedMethods);
+    return route;
+}
+
 #define PORT 4142  // our server's port
-
-
-enum RequestType {
-	GET,
-	POST,
-	DELETE,
-	UNDEFINED
-};
-
-enum HTTPStatus {
-	OK = 200,
-	CREATED = 201,
-	ACCEPTED = 202,
-	NO_CONTENT = 204,
-	BAD_REQUEST = 400,
-	UNAUTHORIZED = 401,
-	FORBIDDEN = 403,
-	NOT_FOUND = 404,
-	INTERNAL_SERVER_ERROR = 500,
-	NOT_IMPLEMENTED = 501,
-	SERVICE_UNAVAILABLE = 503
-};
 
 int create_server_socket(void);
 void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds);
-RequestType read_data_from_socket(int client_fd);
+Response read_data_from_socket(int client_fd);
 void add_to_poll_fds(std::vector<pollfd> & poll_fds, int fd);
 // void del_from_poll_fds(struct pollfd **poll_fds, int i, int *poll_count);
 
@@ -102,72 +94,6 @@ int main(void)
     return (0);
 }
 
-std::string getMessage(HTTPStatus status) {
-	switch (status) {
-		case OK:
-			return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ";
-		case CREATED:
-			return "HTTP/1.1 201 Created\r\nContent-Type: text/html\r\nContent-Length: ";
-		case ACCEPTED:
-			return "HTTP/1.1 202 Accepted\r\nContent-Type: text/html\r\nContent-Length: ";
-		case NO_CONTENT:
-			return "HTTP/1.1 204 No Content\r\nContent-Type: text/html\r\nContent-Length: ";
-		case BAD_REQUEST:
-			return "HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\nContent-Length: ";
-		case UNAUTHORIZED:
-			return "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/html\r\nContent-Length: ";
-		case FORBIDDEN:
-			return "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\nContent-Length: ";
-		case NOT_FOUND:
-			return "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nContent-Length: ";
-		case INTERNAL_SERVER_ERROR:
-			return "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/html\r\nContent-Length: ";
-		case NOT_IMPLEMENTED:
-			return "HTTP/1.1 501 Not Implemented\r\nContent-Type: text/html\r\nContent-Length: ";
-		case SERVICE_UNAVAILABLE:
-			return "HTTP/1.1 503 Service Unavailable\r\nContent-Type: text/html\r\nContent-Length: ";
-		default:
-			return "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/html\r\nContent-Length: ";
-	}
-}
-
-std::string getHtml(HTTPStatus status, RequestType requestType) {
-    (void)status;
-    std::string response;
-    if (requestType == GET)
-	    response = "<html><h1>Hello, I got a GET Request!</h1></html>";
-    else if (requestType == POST)
-        response = "<html><h1>Hello, I got a POST Request!</h1></html>";
-    else if (requestType == DELETE)
-        response = "<html><h1>Hello, I got a DELETE Request!</h1></html>";
-    else {
-        response = "<html><h1>400 BAD REQUEST</h1></html>";
-    }
-    return response;
-}
-
-void send_response(int client_fd, HTTPStatus status, RequestType requestType) {
-
-	std::string serverMessage = getMessage(status);
-    std::string response = getHtml(status, requestType);
-
-	std::stringstream ss;
-	ss << response.size();
-	serverMessage.append(ss.str());
-	serverMessage.append("\r\n\r\n");
-	serverMessage.append(response);
-
-	size_t messageSize = serverMessage.size();
-	const char* message = serverMessage.c_str();
-
-	(void)requestType;
-
-    int send_status = send(client_fd, message, messageSize, 0);
-    if (send_status == -1) {
-		std::cerr << "[Server] Send error to client " << client_fd << std::endl;
-    }
-}
-
 int create_server_socket(void) {
     // Prepare the address and port for the server socket
     struct sockaddr_in sa;
@@ -212,15 +138,9 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
 
 	std::cout << "[Server] Accepted new connection on client socket " << client_fd << std::endl;
 
-	RequestType requestType = read_data_from_socket(client_fd);
+	Response response = read_data_from_socket(client_fd);
 
-    if (requestType == UNDEFINED) {
-        send_response(client_fd, BAD_REQUEST, requestType);
-        close(client_fd);
-        return;
-    }
-
-	send_response(client_fd, OK, requestType);
+    response.send_response(client_fd, *(mock_route())); // Send correct route
 
 	close(client_fd);
 	// poll_fds.erase(std::remove_if(poll_fds.begin(), poll_fds.end(), [client_fd](const pollfd & pfd) {
@@ -231,19 +151,19 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
 }
 
 RequestType getType(std::string request) {
-    if (request.find("GET") != std::string::npos) {
+    if (request == "GET") {
         return GET;
     }
-    else if (request.find("POST") != std::string::npos) {
+    else if (request == "POST") {
         return POST;
     }
-    else if (request.find("DELETE") != std::string::npos) {
+    else if (request == "DELETE") {
         return DELETE;
     }
     return UNDEFINED;
 }
 
-RequestType read_data_from_socket(int client_fd)
+Response read_data_from_socket(int client_fd)
 {
     char buffer[BUFSIZ];
     int bytes_read;
@@ -258,7 +178,38 @@ RequestType read_data_from_socket(int client_fd)
         }
     }
 
-	return getType(buffer);
+    // Find the first line of the request
+    std::string request_line = ((std::string) buffer).substr(0, ((std::string) buffer).find("\r\n"));
+
+    // Split the request line by spaces
+    std::istringstream request_stream(request_line);
+    std::string method, path;
+    request_stream >> method >> path;
+
+    if (method.empty() || path.empty()) {
+        return Response(BAD_REQUEST, UNDEFINED);
+    }
+
+    // ConfigFile config;
+    RequestType requestType = getType(method);
+
+    // if (!config.isPathValid(path)) {
+    //     return Response(NOT_FOUND, UNDEFINED);
+    // }
+    // if (!config.getRoute(path).isMethodAllowed(requestType)) {
+    //     return Response(FORBIDDEN, UNDEFINED);
+    // }
+
+    switch (requestType) {
+        case GET:
+            return Response(OK, requestType);
+        case POST:
+            return Response(CREATED, requestType);
+        case DELETE:
+            return Response(ACCEPTED, requestType);
+        default:
+            return Response(BAD_REQUEST, UNDEFINED);
+    }
 }
 
 // Add a new file descriptor to the pollfd array

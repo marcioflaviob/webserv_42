@@ -6,11 +6,11 @@ RM			= rm -rf
 
 OBJDIR = .objFiles
 
-FILES		= main ConfigFile
+FILES		= main ConfigFile Route Response
 
 SRC			= $(FILES:=.cpp)
 OBJ			= $(addprefix $(OBJDIR)/, $(FILES:=.o))
-HEADER		= ConfigFile.hpp
+HEADER		= ConfigFile.hpp Route.hpp Response.hpp
 
 #Colors:
 GREEN		=	\e[92;5;118m
