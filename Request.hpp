@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 20:55:35 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/11 21:58:35 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/11 22:11:59 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,12 @@
 #define REQUEST_HPP
 
 #include "Enums.hpp"
-#include <iostream>
-#include <string>
 #include <map>
-
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <iterator>
+#include <algorithm>
 
 class Request {
 	private:
@@ -41,10 +43,19 @@ class Request {
 		void setType(RequestType type);
 		void addHeader(std::string key, std::string value);
 
+		void fillVariables(std::string request);
+
 		class	KeyNotFound : public std::exception {
 		public:
 			virtual const char* what() const throw() {
 					return ("Key not found");
+				};
+		};
+
+		class	BadRequest : public std::exception {
+		public:
+			virtual const char* what() const throw() {
+					return ("Request invalid");
 				};
 		};
 };
