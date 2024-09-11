@@ -137,7 +137,7 @@ std::string getHtml(HTTPStatus status, RequestType requestType) {
     if (requestType == GET)
 	    response = "<html><h1>Hello, I got a GET Request!</h1></html>";
     else if (requestType == POST)
-        response = "<html><h1>Hello, I got a POST Request!</h1></html>";
+        response = "<html><h1>Hello, I got a POST Request!</h1></html>"; 
     else if (requestType == DELETE)
         response = "<html><h1>Hello, I got a DELETE Request!</h1></html>";
     else {
