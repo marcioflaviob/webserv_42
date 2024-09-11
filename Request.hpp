@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 20:55:35 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/11 21:20:51 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/11 21:58:35 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,10 @@
 #define REQUEST_HPP
 
 #include "Enums.hpp"
+#include <iostream>
+#include <string>
+#include <map>
+
 
 class Request {
 	private:
