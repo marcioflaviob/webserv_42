@@ -18,6 +18,7 @@
 #include "Route.hpp"
 #include "Response.hpp"
 #include "Enums.hpp"
+#include "Request.hpp"
 #include "ConfigFile.hpp"
 
 Route * mock_route() {
@@ -134,7 +135,8 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
     }
     // add_to_poll_fds(poll_fds, client_fd, poll_count, poll_size);
 	// poll_fds.push_back({client_fd, POLLIN});
-	add_to_poll_fds(poll_fds, client_fd);
+	// add_to_poll_fds(poll_fds, client_fd);
+    (void)poll_fds;
 
 	std::cout << "[Server] Accepted new connection on client socket " << client_fd << std::endl;
 
@@ -148,19 +150,6 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
 	// }), poll_fds.end());
 
     std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
-}
-
-RequestType getType(std::string request) {
-    if (request == "GET") {
-        return GET;
-    }
-    else if (request == "POST") {
-        return POST;
-    }
-    else if (request == "DELETE") {
-        return DELETE;
-    }
-    return UNDEFINED;
 }
 
 Response read_data_from_socket(int client_fd)
@@ -178,35 +167,30 @@ Response read_data_from_socket(int client_fd)
         }
     }
 
-    // Find the first line of the request
-    std::string request_line = ((std::string) buffer).substr(0, ((std::string) buffer).find("\r\n"));
+    Request request;
 
-    // Split the request line by spaces
-    std::istringstream request_stream(request_line);
-    std::string method, path;
-    request_stream >> method >> path;
-
-    if (method.empty() || path.empty()) {
+    try {
+        request.fillVariables(std::string(buffer));
+    } catch(const std::exception& e) {
         return Response(BAD_REQUEST, UNDEFINED);
     }
+    
 
-    // ConfigFile config;
-    RequestType requestType = getType(method);
 
-    // if (!config.isPathValid(path)) {
+    // if (!config.isPathValid(request.getPath())) {
     //     return Response(NOT_FOUND, UNDEFINED);
     // }
-    // if (!config.getRoute(path).isMethodAllowed(requestType)) {
+    // if (!config.getRoute(request.getPath()).isMethodAllowed(request.getType())) {
     //     return Response(FORBIDDEN, UNDEFINED);
     // }
 
-    switch (requestType) {
+    switch (request.getType()) {
         case GET:
-            return Response(OK, requestType);
+            return Response(OK, request.getType());
         case POST:
-            return Response(CREATED, requestType);
+            return Response(CREATED, request.getType());
         case DELETE:
-            return Response(ACCEPTED, requestType);
+            return Response(ACCEPTED, request.getType());
         default:
             return Response(BAD_REQUEST, UNDEFINED);
     }
