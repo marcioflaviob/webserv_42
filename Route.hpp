@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 20:54:29 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/10 23:15:14 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/13 11:15:43 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,10 +30,10 @@ class Route {
 		std::string		_root;
 		std::string		_index;
 		std::vector<RequestType>	_allowedMethods;
-		Route();
 		
 	public:
 		Route(std::string path, std::string root, std::string index, std::vector<RequestType> allowedMethods);
+		Route();
 		~Route();
 		
 		std::vector<RequestType>	getAllowedMethods();

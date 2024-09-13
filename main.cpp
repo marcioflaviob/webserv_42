@@ -21,17 +21,6 @@
 #include "Request.hpp"
 #include "ConfigFile.hpp"
 
-Route * mock_route() {
-    std::vector<RequestType> allowedMethods;
-    allowedMethods.push_back(GET);
-    allowedMethods.push_back(POST);
-    allowedMethods.push_back(DELETE);
-    Route * route = new Route("/test", "./", "index.html", allowedMethods);
-    return route;
-}
-
-#define PORT 4142  // our server's port
-
 int create_server_socket(void);
 void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds);
 Response read_data_from_socket(int client_fd);
@@ -42,6 +31,8 @@ int main(void)
 {
     int server_socket;
     int status;
+    ConfigFile::initialize("./config.conf");
+
 
     // To monitor client sockets:
     // struct pollfd *poll_fds; // Array of socket file descriptors
@@ -54,7 +45,6 @@ int main(void)
     }
 
     // Listen to port via socket
-	std::cout << "[Server] Listening on port " << PORT << std::endl;
     status = listen(server_socket, 3000);
     if (status != 0) {
 		std::cerr << "[Server] Listen error: " << std::endl;
@@ -100,10 +90,36 @@ int create_server_socket(void) {
     struct sockaddr_in sa;
     int socket_fd;
     int status;
+    ConfigFile config = ConfigFile::getInstance();
 
     sa.sin_family = AF_INET; // IPv4
-    sa.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // 127.0.0.1, localhost
-    sa.sin_port = htons(PORT);
+
+    // Resolve the host name to an IP address using getaddrinfo
+    struct addrinfo hints, *res;
+
+    hints.ai_flags = 0;
+    hints.ai_family = AF_INET; // IPv4
+    hints.ai_socktype = SOCK_STREAM; // TCP
+    hints.ai_protocol = 0;
+    hints.ai_addrlen = 0;
+    hints.ai_addr = NULL;
+    hints.ai_canonname = NULL;
+    hints.ai_next = NULL;
+
+    hints.ai_family = AF_INET; // IPv4
+    hints.ai_socktype = SOCK_STREAM; // TCP
+
+    status = getaddrinfo(config.getHost().c_str(), NULL, &hints, &res);
+    if (status != 0) {
+        std::cerr << "[Server] getaddrinfo error: " << gai_strerror(status) << std::endl;
+        return (-1);
+    }
+
+    // Copy the resolved IP address to sa.sin_addr
+    sa.sin_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+    freeaddrinfo(res); // Free the address info structure
+
+    sa.sin_port = htons(config.getPort());
 
     // Create listening socket
     socket_fd = socket(sa.sin_family, SOCK_STREAM, 0);
@@ -119,7 +135,7 @@ int create_server_socket(void) {
         std::cerr << "[Server] Bind error" << std::endl;
         return (-1);
     }
-	std::cout << "Bound socket to localhost port " << PORT << std::endl;
+	std::cout << "Bound socket to localhost port " << config.getPort() << std::endl;
 
     return (socket_fd);
 }
@@ -142,7 +158,7 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
 
 	Response response = read_data_from_socket(client_fd);
 
-    response.send_response(client_fd, *(mock_route())); // Send correct route
+    response.send_response(client_fd); // Send correct route
 
 	close(client_fd);
 	// poll_fds.erase(std::remove_if(poll_fds.begin(), poll_fds.end(), [client_fd](const pollfd & pfd) {
@@ -168,6 +184,7 @@ Response read_data_from_socket(int client_fd)
     }
 
     Request request;
+    ConfigFile config = ConfigFile::getInstance();
 
     try {
         request.fillVariables(std::string(buffer));
@@ -175,24 +192,28 @@ Response read_data_from_socket(int client_fd)
         return Response(BAD_REQUEST, UNDEFINED);
     }
     
+    std::cout << "[Server] Received request: " << request.getPath() << std::endl;
+    std::cout << config.isPathValid(request.getPath()) << std::endl;
 
+    if (!config.isPathValid(request.getPath())) {
+        return Response(NOT_FOUND, UNDEFINED);
+    }
 
-    // if (!config.isPathValid(request.getPath())) {
-    //     return Response(NOT_FOUND, UNDEFINED);
-    // }
-    // if (!config.getRoute(request.getPath()).isMethodAllowed(request.getType())) {
-    //     return Response(FORBIDDEN, UNDEFINED);
-    // }
+    Route route = config.getRoute(request.getPath());
+
+    if (!config.getRoute(request.getPath()).isMethodAllowed(request.getType())) {
+        return Response(FORBIDDEN, UNDEFINED, route);
+    }
 
     switch (request.getType()) {
         case GET:
-            return Response(OK, request.getType());
+            return Response(OK, request.getType(), route);
         case POST:
-            return Response(CREATED, request.getType());
+            return Response(CREATED, request.getType(), route);
         case DELETE:
-            return Response(ACCEPTED, request.getType());
+            return Response(ACCEPTED, request.getType(), route);
         default:
-            return Response(BAD_REQUEST, UNDEFINED);
+            return Response(BAD_REQUEST, UNDEFINED, route);
     }
 }
 

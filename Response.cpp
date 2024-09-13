@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:20:57 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/10 23:21:33 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/13 12:22:31 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,10 @@
 #include <iostream>
 
 Response::Response(HTTPStatus status, RequestType requestType) : _status(status), _requestType(requestType) {
+	_route = NULL;
+}
+
+Response::Response(HTTPStatus status, RequestType requestType, Route & route) : _status(status), _requestType(requestType), _route(&route) {
 
 }
 
@@ -73,6 +77,14 @@ std::string	Response::getResponse() {
 	return _response;
 }
 
+Route &		Response::getRoute() {
+	return *_route;
+}
+
+void Response::setRoute(Route & route) {
+	this->_route = &route;
+}
+
 void		Response::setRequestType(RequestType requestType) {
 	this->_requestType = requestType;
 }
@@ -89,10 +101,10 @@ void		Response::appendResponse(std::string str) {
 	this->_response.append(str);
 }
 
-void Response::send_response(int client_fd, Route & route) {
+void Response::send_response(int client_fd) {
 	setResponse(getMessage(getStatus()));
 	
-	std::string response = route.getHtml(getStatus());
+	std::string response = _route->getHtml(getStatus());
 
 	std::cout << "[Server] Sending response to client " << client_fd << std::endl;
 	std::cout << "Response: " << response << std::endl;
