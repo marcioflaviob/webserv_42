@@ -1,10 +1,47 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<title>My Website</title>
-</head>
-<body>
-	<h1>Welcome to My Website</h1>
-	<p>This is the home page of my website.</p>
-</body>
+	<head>
+		<style>
+			@keyframes hole {
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+			@keyframes gradientAnimation {
+				0% {
+					background-position: 0% 50%;
+				}
+				50% {
+					background-position: 100% 50%;
+				}
+				100% {
+					background-position: 0% 50%;
+				}
+			}
+			text
+			{
+				color: #7db8ec;
+				font-family: Lato;
+				position: absolute;
+				margin-bottom: 5em;
+				font-size: 5em;
+				transition: color 0.5s ease;
+			}
+			text:hover
+			{
+				color: aliceblue;
+			}
+		</style>
+	</head>
+	<body style="margin: 0; padding: 0; height: 100%; background: linear-gradient(90deg, black, rgb(50, 1, 71)); background-size: 200% 200%; animation: gradientAnimation 8s ease infinite; display: flex; justify-content: center; align-items: center;">
+		<text>
+			SPACE NGIN
+		</text>
+		<div class="blackhole" style="width: 10em; height: 10em; margin-top: 30em;">
+			<div class="megna" style="width: 100%; height: 100%; border-radius: 100%; background: linear-gradient(#ff4500, #ff4500, #ff9900); box-shadow: 0 0 60px 30px #fcbd3e, 0 0 100px 60px #fd7a4d, 0 0 140px 90px #ff0b6b; display: flex; justify-content: center; align-items: center; filter: blur(5px);">
+				<div class="black" style="width: 90%; height: 90%; border-radius: 45% 50% 50% 50%; background-color: black; transform: rotate(0deg); animation: hole 0.1s linear infinite normal;">
+				</div>
+			</div>
+		</div>
+	</body>
 </html>

@@ -6,11 +6,12 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 21:04:39 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/10 23:26:12 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/13 12:35:09 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Route.hpp"
+#include "ConfigFile.hpp"
 
 Route::Route() {
 
@@ -41,19 +42,37 @@ std::string	Route::getIndex() {
 }
 
 std::string Route::getHtml(HTTPStatus status) {
-	(void)status;
-    std::string filePath = _root + _index;
-	
-    std::ifstream file(filePath.c_str());
+	if (status == OK || status == CREATED || status == ACCEPTED) {
+		std::string filePath = _root + _index;
 
-    if (!file.is_open()) {
-        return ""; // TODO THROW EXCEPTION MAYBE
-    }
+		std::cout << "File path: " << filePath << std::endl;
+		
+		std::ifstream file(filePath.c_str());
 
-    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-	
-	file.close();
-    return content;
+		if (!file.is_open()) {
+			std::cout << "SOMETHING WENT WRONG" << std::endl;
+			return ""; // TODO THROW EXCEPTION MAYBE
+		}
+
+		std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		
+		file.close();
+		return content;
+	} else {
+		ConfigFile config = ConfigFile::getInstance();
+		std::string filePath = config.getError();
+		
+		std::ifstream file(filePath.c_str());
+
+		if (!file.is_open()) {
+			return ""; // TODO THROW EXCEPTION MAYBE
+		}
+
+		std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		
+		file.close();
+		return content;
+	}
 }
 
 void Route::addAllowedMethod(RequestType method) {
