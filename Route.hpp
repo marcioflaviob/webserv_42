@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Route.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 20:54:29 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/13 11:15:43 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/14 20:58:18 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,7 @@ class Route {
 
 		bool		isMethodAllowed(RequestType method);
 
+	
 };
 
 #endif

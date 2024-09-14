@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Route.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 21:04:39 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/13 12:35:09 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/14 20:58:11 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,3 +101,5 @@ bool Route::isMethodAllowed(RequestType method) {
 	}
 	return true;
 }
+
+

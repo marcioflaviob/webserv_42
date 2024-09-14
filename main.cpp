@@ -20,6 +20,7 @@
 #include "Enums.hpp"
 #include "Request.hpp"
 #include "ConfigFile.hpp"
+#include "CGI.hpp"
 
 int create_server_socket(void);
 void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds);

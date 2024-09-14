@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:18:15 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/13 18:15:25 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/14 21:02:02 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,10 @@
 
 #include "Route.hpp"
 #include "Enums.hpp"
+#include "CGI.hpp"
 
 class Route;
+class CGI;
 
 class Response {
 	private:
