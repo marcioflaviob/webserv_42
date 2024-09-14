@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:18:15 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/13 18:15:25 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/13 19:05:11 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,6 @@ class Response {
 		RequestType _requestType;
 		std::string _response;
 		Route * _route;
-		bool isCgi;
 		
 	public:
 		Response(HTTPStatus status, RequestType requestType);

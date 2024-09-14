@@ -6,12 +6,13 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/07 19:18:24 by trimize           #+#    #+#             */
-/*   Updated: 2024/09/13 14:17:00 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/14 00:00:49 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ConfigFile.hpp"
 #include "Request.hpp"
+#include <sys/stat.h>
 
 ConfigFile * ConfigFile::instance = NULL;
 
@@ -106,6 +107,10 @@ void	ConfigFile::fillRoutes(std::string str) {
                 inRoute = true;
                 route = Route();
                 route.setPath(line.substr(6, line.find(" {") - 6));
+                if (route.getPath()[0] == '/' && route.getPath().size() > 1)
+                    route.setPath(route.getPath().substr(1));
+                if (route.getPath().empty())
+                    route.setPath("/");
                 // std::cout << "PATH=" << route.getPath() << std::endl;
             }
             else if (inRoute)
@@ -122,10 +127,26 @@ void	ConfigFile::fillRoutes(std::string str) {
                 else if (line.find("ROOT=") == 0)
                 {
                     route.setRoot(line.substr(5));
+                    if (route.getRoot()[route.getRoot().size() - 1] != '/')
+                        route.setRoot(route.getRoot() + "/");
+                    if (route.getRoot()[0] == '/' && route.getRoot().size() > 1)
+                        route.setRoot(route.getRoot().substr(1));
                 }
                 else if (line.find("INDEX=") == 0)
                 {
                     route.setIndex(line.substr(6));
+                    std::string index = route.getRoot() + route.getIndex();
+                    if (index[0] == '/' && index.size() > 1)
+                        route.setIndex(index.substr(1));
+                    else
+                        route.setIndex(index);
+                    if (route.getIndex().empty())
+                        route.setIndex("index.html");
+                    struct stat info;
+                    if (stat(route.getIndex().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
+                        std::cout << "Index is " << route.getIndex() << std::endl;
+                        throw ConfigFile::InvalidIndex();
+                    }
                 }
                 else if (line.find("}") == 0)
                 {
@@ -265,9 +286,9 @@ void ConfigFile::fillVariables()
             else if (key == "ROOT=")
             {
                 this->root = value;
-                if (access(this->root.c_str(), F_OK) == -1)
+                struct stat info;
+                if (stat(this->root.c_str(), &info) != 0 || !S_ISDIR(info.st_mode))
                     throw ConfigFile::InvalidRoot();
-                if ()
             }
             else if (key == "ROUTE=")
             {

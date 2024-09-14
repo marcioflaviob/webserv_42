@@ -14,6 +14,7 @@
 #include <vector>
 #include <iterator>
 #include <iostream>
+#include <sys/stat.h>
 
 #include "Route.hpp"
 #include "Response.hpp"
@@ -168,6 +169,19 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
     std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
 }
 
+std::string get_directory_path(std::string path) {
+    std::string directory = path;
+    size_t found = directory.find_last_of("/\\");
+    if (found == std::string::npos) {
+        return "/";
+    }
+    directory = directory.substr(0, found);
+    if (directory == "") {
+        directory = "/";
+    }
+    return directory;
+}
+
 Response read_data_from_socket(int client_fd)
 {
     char buffer[BUFSIZ];
@@ -192,18 +206,64 @@ Response read_data_from_socket(int client_fd)
         return Response(BAD_REQUEST, UNDEFINED);
     }
     
-    std::cout << "[Server] Received request: " << request.getPath() << std::endl;
-    std::cout << config.isPathValid(request.getPath()) << std::endl;
 
-    if (!config.isPathValid(request.getPath())) {
-        return Response(NOT_FOUND, UNDEFINED);
+    if (config.isPathValid(request.getPath())) {
+        if (!config.getRoute(request.getPath()).isMethodAllowed(request.getType())) {
+            return Response(FORBIDDEN, UNDEFINED, config.getRoute(request.getPath()));
+        }
+        // return Response(NOT_FOUND, UNDEFINED);
     }
 
-    Route route = config.getRoute(request.getPath());
-
-    if (!config.getRoute(request.getPath()).isMethodAllowed(request.getType())) {
-        return Response(FORBIDDEN, UNDEFINED, route);
+    Route route;
+    
+    try
+    {
+        route = config.getRoute(request.getPath());
     }
+    catch(const std::exception& e)
+    {
+        std::string dir = get_directory_path(request.getPath());
+        if (config.isPathValid(dir)) {
+            route = config.getRoute(dir);
+            if (!config.getRoute(dir).isMethodAllowed(request.getType())) {
+                return Response(FORBIDDEN, UNDEFINED, route);
+            }
+            if (request.getPath().find(route.getPath()) == 0) { // Found the path of the route in the request path
+                std::cout << "Got here" << std::endl;
+                std::string path;
+                size_t pos = request.getPath().find('/');
+                if (pos != std::string::npos) {
+                    path = request.getPath().substr(pos + 1);
+                }
+                std::cout << "Path: " << path << std::endl;
+                std::cout << "Previous path: " << request.getPath() << std::endl;
+                request.setPath(path);
+            }
+            route.setPath(route.getRoot() + request.getPath());
+            std::cout << "Root: " << route.getRoot() << std::endl;
+            if (route.getPath()[0] == '/' && route.getPath().size() > 1) {
+                route.setPath(route.getPath().substr(1));
+            }
+            std::cout << "Route path: " << route.getPath() << std::endl;
+            struct stat info;
+            if (stat(route.getPath().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
+                return Response(NOT_FOUND, UNDEFINED);
+            }
+        }
+        else {
+            struct stat info;
+            if (stat(request.getPath().c_str(), &info) != 0) {
+                return Response(NOT_FOUND, UNDEFINED);
+            }
+            if (!S_ISDIR(info.st_mode) && !S_ISREG(info.st_mode)) {
+                return Response(NOT_FOUND, UNDEFINED);
+            }
+            route.setPath(request.getPath());
+        }
+    }
+    
+    
+
 
     switch (request.getType()) {
         case GET:

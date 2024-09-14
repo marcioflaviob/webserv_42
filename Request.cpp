@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 20:56:47 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/13 11:17:52 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/13 23:58:06 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,12 @@ void Request::fillVariables(std::string request) {
 	}
 
 	_type = formatType(method);
+	if (path[0] == '/' && path.size() > 1) {
+		path = path.substr(1);
+	}
+	if (path[path.size() - 1] == '/' && path.size() > 1) {
+		path = path.substr(0, path.size() - 1);
+	}
 	_path = path;
 
 	std::string line;
