@@ -157,9 +157,30 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
 
 	std::cout << "[Server] Accepted new connection on client socket " << client_fd << std::endl;
 
-	Response response = read_data_from_socket(client_fd);
+	std::string buffer = read_data_from_socket(client_fd);
 
-    response.send_response(client_fd); // Send correct route
+
+
+    Response response;
+    Request request;
+
+    try
+    {
+        request.fillVariables(std::string(buffer));
+        if (request.getIsCgi()) {
+            response = //IMPLEMENT CGI
+        } else {
+            response = request_dealer(buffer, request);
+            response.send_response(client_fd); // Send correct route
+        }
+    }
+    catch(const std::exception& e)
+    {
+        response = Response(BAD_REQUEST, UNDEFINED);
+    }
+    
+    
+
 
 	close(client_fd);
 	// poll_fds.erase(std::remove_if(poll_fds.begin(), poll_fds.end(), [client_fd](const pollfd & pfd) {
@@ -182,22 +203,7 @@ std::string get_directory_path(std::string path) {
     return directory;
 }
 
-Response read_data_from_socket(int client_fd)
-{
-    char buffer[BUFSIZ];
-    int bytes_read;
-
-    bytes_read = recv(client_fd, buffer, BUFSIZ, 0);
-    if (bytes_read <= 0) {
-        if (bytes_read == 0) {
-            std::cout << "[Server] Client socket closed connection." << std::endl;
-        }
-        else {
-            std::cerr << "[Server] Recv error: " << std::endl;
-        }
-    }
-
-    Request request;
+Response request_dealer(std::string buffer, Request request) {
     ConfigFile config = ConfigFile::getInstance();
 
     try {
@@ -260,7 +266,24 @@ Response read_data_from_socket(int client_fd)
             }
             route.setPath(request.getPath());
         }
+}
+
+std::string read_data_from_socket(int client_fd)
+{
+    char buffer[BUFSIZ];
+    int bytes_read;
+
+    bytes_read = recv(client_fd, buffer, BUFSIZ, 0);
+    if (bytes_read <= 0) {
+        if (bytes_read == 0) {
+            std::cout << "[Server] Client socket closed connection." << std::endl;
+        }
+        else {
+            std::cerr << "[Server] Recv error: " << std::endl;
+        }
     }
+    return std::string(buffer);
+}
     
     
 

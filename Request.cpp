@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 20:56:47 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/13 23:58:06 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/14 21:43:05 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,10 @@ void Request::fillVariables(std::string request) {
 		path = path.substr(0, path.size() - 1);
 	}
 	_path = path;
+
+	if (path.find("cgi-bin") != std::string::npos) {
+		_isCgi = true;
+	}
 
 	std::string line;
 	bool is_first = true;
@@ -89,6 +93,14 @@ std::string Request::getPath() {
 
 RequestType Request::getType() {
 	return _type;
+}
+
+bool Request::getIsCgi() {
+	return _isCgi;
+}
+
+void Request::setIsCgi(bool isCgi) {
+	_isCgi = isCgi;
 }
 
 std::map<std::string, std::string> Request::getHeaders() {
