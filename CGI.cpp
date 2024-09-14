@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:39:55 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/13 20:06:02 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/14 22:43:05 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@ CGI::CGI(){}
 
 CGI::CGI(Request req, std::string path): _path(path)
 {
+	_req = req;
 	_env["REQUEST_METHOD"] = req.getType();
 	_env["REQUEST_URI"] = req.getPath();
 	_env["SERVER_PROTOCOL"] = "HTTP/1.1";
@@ -67,30 +68,33 @@ char** CGI::env_map_to_string(){
 	return (env);
 }
 
-void CGI::executeCGI()
+Response CGI::executeCGI()
 {
 	pid_t pid;
 	int pipes[2];
 	std::string responseBody;
 	int ret;
 	char **env = env_map_to_string();
+	Response response;
 
 	if(pipe(pipes) == -1)
 	{
 		std::cerr << "Pipe failed" << std::endl;
-		return;
+		return Response(INTERNAL_SERVER_ERROR, _req.getType());
 	}
 	pid = fork();
 	if (pid == -1)
 	{
 		std::cerr << "Fork failed" << std::endl;
+		return Response(INTERNAL_SERVER_ERROR, _req.getType());
 	}
 	if (pid == 0)
 	{
+		char *const argv[] = {NULL};
 		close(pipes[1]);
 		dup2(pipes[0], 0);
 		close(pipes[0]);
-		execve(_path.c_str(), NULL, env);
+		execve(_path.c_str(), argv, env);
 	}
 	else{
 		char buffer[BufferSize];
@@ -102,7 +106,7 @@ void CGI::executeCGI()
 		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
 		{
 			std::cerr << "CGI failed" << std::endl;
-			return;
+			return Response(INTERNAL_SERVER_ERROR, _req.getType());
 		}
 		while ((ret = read(pipes[0], buffer, BufferSize)) > 0)
 		{
@@ -119,6 +123,10 @@ void CGI::executeCGI()
 	}
 	delete [] env;
 	std::cout << responseBody << std::endl;
+	response.setResponse(responseBody);
+	response.setStatus(OK);
+	response.setRequestType(_req.getType());
+	return response;
 }
 
 	

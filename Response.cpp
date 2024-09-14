@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:20:57 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/14 21:35:21 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/14 22:48:46 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,10 @@
 #include <vector>
 #include <iterator>
 #include <iostream>
+
+Response::Response() {
+	
+}
 
 Response::Response(HTTPStatus status, RequestType requestType) : _status(status), _requestType(requestType) {
 	_route = NULL;
@@ -111,6 +115,36 @@ void Response::send_response(int client_fd) {
 	setResponse(getMessage(getStatus()));
 	
 	std::string response = _route->getHtml(getStatus());
+
+	std::cout << "[Server] Sending response to client " << client_fd << std::endl;
+	std::cout << "Response: " << response << std::endl;
+
+	std::stringstream ss;
+	ss << response.size();
+	appendResponse(ss.str());
+	appendResponse("\r\n\r\n");
+	appendResponse(response);
+	
+	std::string finalResponse = getResponse();
+	size_t messageSize = finalResponse.size();
+	const char* message = finalResponse.c_str();
+
+	int send_status = send(client_fd, message, messageSize, 0);
+	if (send_status == -1) {
+		std::cerr << "[Server] Send error to client " << client_fd << std::endl;
+	}
+	
+}
+
+void Response::send_cgi_response(int client_fd) {
+	std::string response = _response;
+	setResponse(getMessage(getStatus()));
+	
+	// std::string response = _response;
+
+	std::cout << "\n\n\n\n\n" << std::endl;
+	std::cout << "Response: " << response << std::endl;
+	std::cout << "\n\n\n\n\n" << std::endl;
 
 	std::cout << "[Server] Sending response to client " << client_fd << std::endl;
 	std::cout << "Response: " << response << std::endl;

@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:40:33 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/13 19:45:32 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/14 22:15:27 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,16 +20,19 @@
 #include <sys/wait.h>
 #include "Request.hpp"
 #include "Enums.hpp"
+#include "Response.hpp"
 
 #define BufferSize 1024
 
 class Request;
+class Response;
 
 class CGI
 {
 private:
 	std::map<std::string, std::string> _env;
 	std::string _path;
+	Request _req;
 public:
 	CGI(/* args */);
 	CGI(Request req, std::string path);
@@ -38,7 +41,7 @@ public:
 	~CGI();
 	std::map<std::string, std::string> getEnv() const;
 	char** env_map_to_string(); 
-	void executeCGI();
+	Response executeCGI();
 };
 
 

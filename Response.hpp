@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:18:15 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/14 21:51:41 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/14 22:43:24 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ class Response {
 	public:
 		Response(HTTPStatus status, RequestType requestType);
 		Response(HTTPStatus status, RequestType requestType, Route & route);
+		Response();
 		~Response();
 		
 		std::string	getMessage(HTTPStatus status);
@@ -54,6 +55,7 @@ class Response {
 		void		appendResponse(std::string response);
 
 		void send_response(int client_fd);
+		void send_cgi_response(int client_fd);
 };
 
 #endif

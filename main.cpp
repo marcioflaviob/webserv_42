@@ -21,12 +21,12 @@
 #include "Enums.hpp"
 #include "Request.hpp"
 #include "ConfigFile.hpp"
-#include "CGI.hpp"
 
 int create_server_socket(void);
 void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds);
-Response read_data_from_socket(int client_fd);
+std::string read_data_from_socket(int client_fd);
 void add_to_poll_fds(std::vector<pollfd> & poll_fds, int fd);
+Response request_dealer(std::string buffer, Request request);
 // void del_from_poll_fds(struct pollfd **poll_fds, int i, int *poll_count);
 
 int main(void)
@@ -161,15 +161,18 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
 	std::string buffer = read_data_from_socket(client_fd);
 
 
-
+    ConfigFile config = ConfigFile::getInstance();
     Response response;
     Request request;
 
     try
     {
         request.fillVariables(std::string(buffer));
+        std::cout << "Is CGI: " << request.getIsCgi() << std::endl;
         if (request.getIsCgi()) {
-            response = //IMPLEMENT CGI
+            CGI cgi(request, request.getPath());
+            response = cgi.executeCGI();
+            response.send_cgi_response(client_fd);
         } else {
             response = request_dealer(buffer, request);
             response.send_response(client_fd); // Send correct route
@@ -267,6 +270,18 @@ Response request_dealer(std::string buffer, Request request) {
             }
             route.setPath(request.getPath());
         }
+    }
+
+        switch (request.getType()) {
+        case GET:
+            return Response(OK, request.getType(), route);
+        case POST:
+            return Response(CREATED, request.getType(), route);
+        case DELETE:
+            return Response(ACCEPTED, request.getType(), route);
+        default:
+            return Response(BAD_REQUEST, UNDEFINED, route);
+    }
 }
 
 std::string read_data_from_socket(int client_fd)
@@ -284,21 +299,6 @@ std::string read_data_from_socket(int client_fd)
         }
     }
     return std::string(buffer);
-}
-    
-    
-
-
-    switch (request.getType()) {
-        case GET:
-            return Response(OK, request.getType(), route);
-        case POST:
-            return Response(CREATED, request.getType(), route);
-        case DELETE:
-            return Response(ACCEPTED, request.getType(), route);
-        default:
-            return Response(BAD_REQUEST, UNDEFINED, route);
-    }
 }
 
 // Add a new file descriptor to the pollfd array
