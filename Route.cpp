@@ -6,12 +6,13 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 21:04:39 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/13 12:35:09 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/13 23:50:02 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Route.hpp"
 #include "ConfigFile.hpp"
+#include <sys/stat.h>
 
 Route::Route() {
 
@@ -43,7 +44,34 @@ std::string	Route::getIndex() {
 
 std::string Route::getHtml(HTTPStatus status) {
 	if (status == OK || status == CREATED || status == ACCEPTED) {
-		std::string filePath = _root + _index;
+		std::string filePath; 
+
+		std::cout << "Route path: " << getPath() << std::endl;
+		
+		struct stat info;
+		if (stat(_path.c_str(), &info) != 0 || !S_ISDIR(info.st_mode)) {
+			std::cout << "Path is not a directory" << std::endl;
+			if (!S_ISREG(info.st_mode)) {
+				std::cout << "Root: " << _root << std::endl;
+				filePath = _index;
+				std::cout << "File path: " << filePath << std::endl;
+				std::cout << "Path is not a file" << std::endl;
+			}
+			else {
+				filePath = _path;
+				std::cout << "Path is a file" << std::endl;
+			}
+		} else {
+			std::cout << "Path is a directory" << std::endl;
+			filePath = _root + _index;
+		}
+
+		if (filePath[0] == '/') {
+			filePath = filePath.substr(1);
+		}
+		if (filePath.empty()) {
+			filePath = "index.html";
+		}
 
 		std::cout << "File path: " << filePath << std::endl;
 		
