@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/07 19:14:42 by trimize           #+#    #+#             */
-/*   Updated: 2024/09/13 14:15:00 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/14 00:00:40 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,6 +92,20 @@ class ConfigFile
 		public:
 			virtual const char* what() const throw() {
 					return ("Body Size informed in the config file is invalid.");
+				};
+		};
+
+		class	InvalidRoot : public std::exception {
+		public:
+			virtual const char* what() const throw() {
+					return ("Root is not a directory.");
+				};
+		};
+
+		class	InvalidIndex : public std::exception {
+		public:
+			virtual const char* what() const throw() {
+					return ("Index is not a file.");
 				};
 		};
 
