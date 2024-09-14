@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 20:55:35 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/14 22:00:45 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/14 22:10:52 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ class Request {
 		std::string _path;
 		std::string _body;
 		std::map<std::string, std::string> _headers;
-		
+		bool _isCgi;
 	
 	public:
 		Request();
@@ -36,12 +36,14 @@ class Request {
 		std::string getBody();
 		std::string getPath();
 		RequestType getType();
+		bool getIsCgi();
 		std::map<std::string, std::string> getHeaders();
 		std::string getHeader(std::string key);
 		
 		void setBody(std::string body);
 		void setPath(std::string path);
 		void setType(RequestType type);
+		void setIsCgi(bool isCgi);
 		void addHeader(std::string key, std::string value);
 
 		void fillVariables(std::string request);
