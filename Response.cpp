@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:20:57 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/14 21:01:29 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/14 21:35:21 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ Response::Response(HTTPStatus status, RequestType requestType) : _status(status)
 }
 
 Response::Response(HTTPStatus status, RequestType requestType, Route & route) : _status(status), _requestType(requestType), _route(&route) {
-	isCgi = route.getPath().find(".cgi") != std::string::npos;
+	//isCgi = route.getPath().find(".cgi") != std::string::npos;
 }
 
 Response::~Response() {
@@ -101,6 +101,9 @@ void		Response::appendResponse(std::string str) {
 	this->_response.append(str);
 }
 
+// bool Response::getIsCgi() {
+// 	return isCgi;
+// }
 
 
 
@@ -126,4 +129,5 @@ void Response::send_response(int client_fd) {
 	if (send_status == -1) {
 		std::cerr << "[Server] Send error to client " << client_fd << std::endl;
 	}
+	
 }

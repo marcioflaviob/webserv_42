@@ -159,6 +159,11 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
 
 	Response response = read_data_from_socket(client_fd);
 
+    // if (response.getIsCgi()) {
+    //     CGI cgi = CGI(response.getRoute().getPath());
+    //     cgi.executeCGI();
+    // } 
+    // else
     response.send_response(client_fd); // Send correct route
 
 	close(client_fd);

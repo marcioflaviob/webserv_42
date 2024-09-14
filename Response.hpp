@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:18:15 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/14 21:02:02 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/14 21:35:05 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ class Response {
 		RequestType _requestType;
 		std::string _response;
 		Route * _route;
-		bool isCgi;
+		//bool isCgi;
 		
 	public:
 		Response(HTTPStatus status, RequestType requestType);
@@ -45,6 +45,7 @@ class Response {
 		HTTPStatus	getStatus();
 		Route &		getRoute();
 		std::string	getResponse();
+		bool		getIsCgi();
 		
 		void		setRoute(Route & route);
 		void		setRequestType(RequestType requestType);
