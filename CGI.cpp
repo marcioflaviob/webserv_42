@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:39:55 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/14 22:43:05 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/16 19:50:18 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,9 +58,14 @@ char** CGI::env_map_to_string(){
 	int i = 0;
 	for (std::map<std::string, std::string>::iterator it = _env.begin(); it != _env.end(); it++)
 	{
-		env[i] = new char[it->first.size() + it->second.size() + 2];
-		std::string tmp = it->first + "=" + it->second;
-		strcpy(env[i], tmp.c_str());
+		 env[i] = new char[it->first.size() + it->second.size() + 2];
+		 std::string tmp = it->first + "=" + it->second;
+		 for (int j = 0; i < tmp.size(); j++)
+		 {
+			env[i][j] = tmp[j];
+		 }
+		// strcpy(env[i], tmp.c_str());
+		//env[i] = (it->first + "=" + it->second).c_str();
 		i++;
 		
 	}

@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 20:54:29 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/14 21:53:40 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/16 19:58:47 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@
 
 class Route {
 	private:
-		std::string		_path;
+		std::string	 _path;
 		std::string		_root;
 		std::string		_index;
 		std::vector<RequestType>	_allowedMethods;
@@ -37,7 +37,7 @@ class Route {
 		~Route();
 		
 		std::vector<RequestType>	getAllowedMethods();
-		std::string	getPath();
+		std::string getPath();
 		std::string	getRoot();
 		std::string	getIndex();
 		std::string getHtml(HTTPStatus status);

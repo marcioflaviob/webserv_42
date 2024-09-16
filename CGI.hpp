@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:40:33 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/14 22:15:27 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/16 19:37:11 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ public:
 	CGI &operator=(const CGI &copy);
 	~CGI();
 	std::map<std::string, std::string> getEnv() const;
+	
 	char** env_map_to_string(); 
 	Response executeCGI();
 };
