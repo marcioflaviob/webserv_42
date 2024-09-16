@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdlib.h>
+#include <wait.h>
 
 using namespace std;
 
@@ -22,6 +23,8 @@ int main() {
         cout << "</head>\n";
         cout << "<body>\n";
         cout << "<table border = \"0\" cellspacing = \"4\">";
+
+        sleep(20);
 
         for (int  i = 0; i < 24; i++) {
                 cout << "<tr><td>" << ENV[i] << "</td><td>";
