@@ -91,8 +91,9 @@ Response CGI::executeCGI()
 	if (pid == 0)
 	{
 		char *const argv[] = {NULL};
-		close(pipes[1]);
+		dup2(pipes[1], 1);
 		dup2(pipes[0], 0);
+		close(pipes[1]);
 		close(pipes[0]);
 		execve(_path.c_str(), argv, env);
 	}
@@ -106,10 +107,12 @@ Response CGI::executeCGI()
 		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
 		{
 			std::cerr << "CGI failed" << std::endl;
+			
 			return Response(INTERNAL_SERVER_ERROR, _req.getType());
 		}
 		while ((ret = read(pipes[0], buffer, BufferSize)) > 0)
 		{
+			std::cout << "BUFFER IS: " << buffer << std::endl;
 			responseBody.append(buffer, ret);
 			//memset(buffer, 0, BufferSize);
 		}
@@ -122,7 +125,6 @@ Response CGI::executeCGI()
 		delete [] env[i];
 	}
 	delete [] env;
-	std::cout << responseBody << std::endl;
 	response.setResponse(responseBody);
 	response.setStatus(OK);
 	response.setRequestType(_req.getType());
