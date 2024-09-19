@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/07 19:18:24 by trimize           #+#    #+#             */
-/*   Updated: 2024/09/14 00:00:49 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/16 21:30:13 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ void ConfigFile::setPath(std::string path)
 void	ConfigFile::fillRoutes(std::string str) {
     std::ifstream file(str.c_str());
     std::string line;
-    Route route;
+    Route * route;
     bool inRoute = false;
 
     if (file.is_open())
@@ -105,13 +105,13 @@ void	ConfigFile::fillRoutes(std::string str) {
                     this->routes.push_back(route);
                 }
                 inRoute = true;
-                route = Route();
-                route.setPath(line.substr(6, line.find(" {") - 6));
-                if (route.getPath()[0] == '/' && route.getPath().size() > 1)
-                    route.setPath(route.getPath().substr(1));
-                if (route.getPath().empty())
-                    route.setPath("/");
-                // std::cout << "PATH=" << route.getPath() << std::endl;
+                route = new Route();
+                route->setPath(line.substr(6, line.find(" {") - 6));
+                if (route->getPath()[0] == '/' && route->getPath().size() > 1)
+                    route->setPath(route->getPath().substr(1));
+                if (route->getPath().empty())
+                    route->setPath("/");
+                // std::cout << "PATH=" << route->getPath() << std::endl;
             }
             else if (inRoute)
             {
@@ -121,30 +121,30 @@ void	ConfigFile::fillRoutes(std::string str) {
                     std::stringstream ss(methods);
                     std::string method;
                     while (std::getline(ss, method, ',')) {
-                        route.addAllowedMethod(formatType(method));
+                        route->addAllowedMethod(formatType(method));
                     }
                 }
                 else if (line.find("ROOT=") == 0)
                 {
-                    route.setRoot(line.substr(5));
-                    if (route.getRoot()[route.getRoot().size() - 1] != '/')
-                        route.setRoot(route.getRoot() + "/");
-                    if (route.getRoot()[0] == '/' && route.getRoot().size() > 1)
-                        route.setRoot(route.getRoot().substr(1));
+                    route->setRoot(line.substr(5));
+                    if (route->getRoot()[route->getRoot().size() - 1] != '/')
+                        route->setRoot(route->getRoot() + "/");
+                    if (route->getRoot()[0] == '/' && route->getRoot().size() > 1)
+                        route->setRoot(route->getRoot().substr(1));
                 }
                 else if (line.find("INDEX=") == 0)
                 {
-                    route.setIndex(line.substr(6));
-                    std::string index = route.getRoot() + route.getIndex();
+                    route->setIndex(line.substr(6));
+                    std::string index = route->getRoot() + route->getIndex();
                     if (index[0] == '/' && index.size() > 1)
-                        route.setIndex(index.substr(1));
+                        route->setIndex(index.substr(1));
                     else
-                        route.setIndex(index);
-                    if (route.getIndex().empty())
-                        route.setIndex("index.html");
+                        route->setIndex(index);
+                    if (route->getIndex().empty())
+                        route->setIndex("index.html");
                     struct stat info;
-                    if (stat(route.getIndex().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
-                        std::cout << "Index is " << route.getIndex() << std::endl;
+                    if (stat(route->getIndex().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
+                        std::cout << "Index is " << route->getIndex() << std::endl;
                         throw ConfigFile::InvalidIndex();
                     }
                 }
@@ -191,34 +191,32 @@ int		ConfigFile::getBodySize()
 	return(this->bodysize);
 }
 
-std::vector<Route>	ConfigFile::getRoutes()
+std::vector<Route *>	ConfigFile::getRoutes()
 {
 	return(this->routes);
 }
 
 bool ConfigFile::isPathValid(const std::string & path)
 {
-	std::vector<Route>::iterator it;
+    std::vector<Route *>::iterator it;
 
-	for (it = this->routes.begin(); it != this->routes.end(); it++)
-	{
-        std::cout << "Comparing " << it->getPath() << " with " << path << std::endl;
-		if (it->getPath() == path)
-			return true;
-	}
-	return false;
+    for (it = this->routes.begin(); it != this->routes.end(); it++)
+    {
+        std::cout << "Comparing " << (*it)->getPath() << " with " << path << std::endl;
+        if ((*it)->getPath() == path)
+            return true;
+    }
+    return false;
 }
 
-Route &	ConfigFile::getRoute(std::string path)
-{
-	std::vector<Route>::iterator it;
+Route * ConfigFile::getRoute(std::string path) {
+    std::vector<Route *>::iterator it;
 
-	for (it = this->routes.begin(); it != this->routes.end(); it++)
-	{
-		if (it->getPath() == path)
-			return *it;
-	}
-	throw ConfigFile::RouteNotFound();
+    for (it = this->routes.begin(); it != this->routes.end(); it++) {
+        if ((*it)->getPath() == path)
+            return *it;
+    }
+    throw ConfigFile::RouteNotFound();
 }
 
 bool		ConfigFile::isAllDigits(const std::string &str)

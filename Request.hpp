@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 20:55:35 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/14 22:10:52 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/16 20:56:25 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ class Request {
 		std::string _path;
 		std::string _body;
 		std::map<std::string, std::string> _headers;
-		bool _isCgi;
+		bool isCgi;
 	
 	public:
 		Request();

@@ -21,12 +21,13 @@
 #include "Enums.hpp"
 #include "Request.hpp"
 #include "ConfigFile.hpp"
+#include "CGI.hpp"
 
 int create_server_socket(void);
 void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds);
 std::string read_data_from_socket(int client_fd);
+Response request_dealer(Request & request);
 void add_to_poll_fds(std::vector<pollfd> & poll_fds, int fd);
-Response request_dealer(std::string buffer, Request request);
 // void del_from_poll_fds(struct pollfd **poll_fds, int i, int *poll_count);
 
 int main(void)
@@ -160,31 +161,29 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
 
 	std::string buffer = read_data_from_socket(client_fd);
 
-
     ConfigFile config = ConfigFile::getInstance();
-    Response response;
     Request request;
+    Response response;
 
     try
     {
-        request.fillVariables(std::string(buffer));
+        request.fillVariables(buffer);
         std::cout << "Is CGI: " << request.getIsCgi() << std::endl;
         if (request.getIsCgi()) {
             CGI cgi(request, request.getPath());
             response = cgi.executeCGI();
             response.send_cgi_response(client_fd);
         } else {
-            response = request_dealer(buffer, request);
-            response.send_response(client_fd); // Send correct route
+            response = request_dealer(request);
+            // std::cout << "Path corrupted: " << response.getRoute()->getPath() << std::endl;
+            response.send_response(client_fd);
         }
     }
     catch(const std::exception& e)
     {
         response = Response(BAD_REQUEST, UNDEFINED);
+        response.send_response(client_fd);
     }
-    
-    
-
 
 	close(client_fd);
 	// poll_fds.erase(std::remove_if(poll_fds.begin(), poll_fds.end(), [client_fd](const pollfd & pfd) {
@@ -207,83 +206,6 @@ std::string get_directory_path(std::string path) {
     return directory;
 }
 
-Response request_dealer(std::string buffer, Request request) {
-    ConfigFile config = ConfigFile::getInstance();
-
-    try {
-        request.fillVariables(std::string(buffer));
-    } catch(const std::exception& e) {
-        return Response(BAD_REQUEST, UNDEFINED);
-    }
-    
-
-    if (config.isPathValid(request.getPath())) {
-        if (!config.getRoute(request.getPath()).isMethodAllowed(request.getType())) {
-            return Response(FORBIDDEN, UNDEFINED, config.getRoute(request.getPath()));
-        }
-        // return Response(NOT_FOUND, UNDEFINED);
-    }
-
-    Route route;
-    
-    try
-    {
-        route = config.getRoute(request.getPath());
-    }
-    catch(const std::exception& e)
-    {
-        std::string dir = get_directory_path(request.getPath());
-        if (config.isPathValid(dir)) {
-            route = config.getRoute(dir);
-            if (!config.getRoute(dir).isMethodAllowed(request.getType())) {
-                return Response(FORBIDDEN, UNDEFINED, route);
-            }
-            if (request.getPath().find(route.getPath()) == 0) { // Found the path of the route in the request path
-                std::cout << "Got here" << std::endl;
-                std::string path;
-                size_t pos = request.getPath().find('/');
-                if (pos != std::string::npos) {
-                    path = request.getPath().substr(pos + 1);
-                }
-                std::cout << "Path: " << path << std::endl;
-                std::cout << "Previous path: " << request.getPath() << std::endl;
-                request.setPath(path);
-            }
-            route.setPath(route.getRoot() + request.getPath());
-            std::cout << "Root: " << route.getRoot() << std::endl;
-            if (route.getPath()[0] == '/' && route.getPath().size() > 1) {
-                route.setPath(route.getPath().substr(1));
-            }
-            std::cout << "Route path: " << route.getPath() << std::endl;
-            struct stat info;
-            if (stat(route.getPath().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
-                return Response(NOT_FOUND, UNDEFINED);
-            }
-        }
-        else {
-            struct stat info;
-            if (stat(request.getPath().c_str(), &info) != 0) {
-                return Response(NOT_FOUND, UNDEFINED);
-            }
-            if (!S_ISDIR(info.st_mode) && !S_ISREG(info.st_mode)) {
-                return Response(NOT_FOUND, UNDEFINED);
-            }
-            route.setPath(request.getPath());
-        }
-    }
-
-        switch (request.getType()) {
-        case GET:
-            return Response(OK, request.getType(), route);
-        case POST:
-            return Response(CREATED, request.getType(), route);
-        case DELETE:
-            return Response(ACCEPTED, request.getType(), route);
-        default:
-            return Response(BAD_REQUEST, UNDEFINED, route);
-    }
-}
-
 std::string read_data_from_socket(int client_fd)
 {
     char buffer[BUFSIZ];
@@ -299,6 +221,74 @@ std::string read_data_from_socket(int client_fd)
         }
     }
     return std::string(buffer);
+}
+
+Response request_dealer(Request & request) {
+    ConfigFile config = ConfigFile::getInstance();
+
+    if (config.isPathValid(request.getPath())) {
+        if (!config.getRoute(request.getPath())->isMethodAllowed(request.getType())) {
+            return Response(FORBIDDEN, UNDEFINED, config.getRoute(request.getPath()), request.getPath());
+        }
+    }
+
+    Route * route;
+    
+    try
+    {
+        route = config.getRoute(request.getPath());
+    }
+    catch(const std::exception& e)
+    {
+        std::string dir = get_directory_path(request.getPath());
+        if (config.isPathValid(dir)) {
+            route = config.getRoute(dir);
+            if (!config.getRoute(dir)->isMethodAllowed(request.getType())) {
+                return Response(FORBIDDEN, UNDEFINED, route, request.getPath());
+            }
+            if (request.getPath().find(route->getPath()) == 0) { // Found the path of the route in the request path
+                std::cout << "Got here" << std::endl;
+                std::string path;
+                size_t pos = request.getPath().find('/');
+                if (pos != std::string::npos) {
+                    path = request.getPath().substr(pos + 1);
+                }
+                std::cout << "Path: " << path << std::endl;
+                std::cout << "Previous path: " << request.getPath() << std::endl;
+                request.setPath(path);
+            }
+            request.setPath(route->getRoot() + request.getPath());
+            if (request.getPath()[0] == '/' && request.getPath().size() > 1) {
+                request.setPath(request.getPath().substr(1));
+            }
+            struct stat info;
+            if (stat(request.getPath().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
+                return Response(NOT_FOUND, UNDEFINED, NULL, request.getPath());
+            }
+        }
+        else {
+            struct stat info;
+            if (stat(request.getPath().c_str(), &info) != 0) {
+                return Response(INTERNAL_SERVER_ERROR, UNDEFINED);
+            }
+            if (!S_ISDIR(info.st_mode) && !S_ISREG(info.st_mode)) {
+                return Response(NOT_FOUND, UNDEFINED, NULL, request.getPath());
+            }
+        }
+    }
+
+    std::cout << "All good" << std::endl;
+
+    switch (request.getType()) {
+        case GET:
+            return Response(OK, request.getType(), route, request.getPath());
+        case POST:
+            return Response(CREATED, request.getType(), route, request.getPath());
+        case DELETE:
+            return Response(ACCEPTED, request.getType(), route, request.getPath());
+        default:
+            return Response(BAD_REQUEST, UNDEFINED, route, request.getPath());
+    }
 }
 
 // Add a new file descriptor to the pollfd array

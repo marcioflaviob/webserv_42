@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:18:15 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/14 22:43:24 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/19 16:41:26 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,10 +21,8 @@
 
 #include "Route.hpp"
 #include "Enums.hpp"
-#include "CGI.hpp"
 
 class Route;
-class CGI;
 
 class Response {
 	private:
@@ -32,11 +30,11 @@ class Response {
 		RequestType _requestType;
 		std::string _response;
 		Route * _route;
-		//bool isCgi;
+		std::string _adjusted_path;
 		
 	public:
 		Response(HTTPStatus status, RequestType requestType);
-		Response(HTTPStatus status, RequestType requestType, Route & route);
+		Response(HTTPStatus status, RequestType requestType, Route * route, std::string path);
 		Response();
 		~Response();
 		
@@ -44,14 +42,15 @@ class Response {
 
 		RequestType	getRequestType();
 		HTTPStatus	getStatus();
-		Route &		getRoute();
+		Route *		getRoute();
+		std::string	getAdjustedPath();
 		std::string	getResponse();
-		bool		getIsCgi();
 		
-		void		setRoute(Route & route);
+		void		setRoute(Route * route);
 		void		setRequestType(RequestType requestType);
 		void		setStatus(HTTPStatus status);
 		void		setResponse(std::string response);
+		void		setAdjustedPath(std::string path);
 		void		appendResponse(std::string response);
 
 		void send_response(int client_fd);

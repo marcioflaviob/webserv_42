@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:20:57 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/14 22:48:46 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/19 16:51:37 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,16 +28,16 @@
 #include <iterator>
 #include <iostream>
 
-Response::Response() {
-	
-}
-
 Response::Response(HTTPStatus status, RequestType requestType) : _status(status), _requestType(requestType) {
 	_route = NULL;
 }
 
-Response::Response(HTTPStatus status, RequestType requestType, Route & route) : _status(status), _requestType(requestType), _route(&route) {
-	//isCgi = route.getPath().find(".cgi") != std::string::npos;
+Response::Response(HTTPStatus status, RequestType requestType, Route * route, std::string path) : _status(status), _requestType(requestType), _route(route), _adjusted_path(path) {
+
+}
+
+Response::Response() {
+	_route = NULL;
 }
 
 Response::~Response() {
@@ -67,76 +67,7 @@ std::string	Response::getMessage(HTTPStatus status) {
 		default:
 			return "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/html\r\nContent-Length: ";
 	}
-}
-
-RequestType	Response::getRequestType() {
-	return _requestType;
-}
-
-HTTPStatus	Response::getStatus() {
-	return _status;
-}
-
-std::string	Response::getResponse() {
-	return _response;
-}
-
-Route &		Response::getRoute() {
-	return *_route;
-}
-
-void Response::setRoute(Route & route) {
-	this->_route = &route;
-}
-
-void		Response::setRequestType(RequestType requestType) {
-	this->_requestType = requestType;
-}
-
-void		Response::setStatus(HTTPStatus status) {
-	this->_status = status;
-}
-
-void		Response::setResponse(std::string response) {
-	this->_response = response;
-}
-
-void		Response::appendResponse(std::string str) {
-	this->_response.append(str);
-}
-
-// bool Response::getIsCgi() {
-// 	return isCgi;
-// }
-
-
-
-void Response::send_response(int client_fd) {
-	setResponse(getMessage(getStatus()));
-	
-	std::string response = _route->getHtml(getStatus());
-
-	std::cout << "[Server] Sending response to client " << client_fd << std::endl;
-	std::cout << "Response: " << response << std::endl;
-
-	std::stringstream ss;
-	ss << response.size();
-	appendResponse(ss.str());
-	appendResponse("\r\n\r\n");
-	appendResponse(response);
-	
-	std::string finalResponse = getResponse();
-	size_t messageSize = finalResponse.size();
-	const char* message = finalResponse.c_str();
-
-	int send_status = send(client_fd, message, messageSize, 0);
-	if (send_status == -1) {
-		std::cerr << "[Server] Send error to client " << client_fd << std::endl;
-	}
-	
-}
-
-void Response::send_cgi_response(int client_fd) {
+}void Response::send_cgi_response(int client_fd) {
 	std::string response = _response;
 	setResponse(getMessage(getStatus()));
 	
@@ -164,4 +95,72 @@ void Response::send_cgi_response(int client_fd) {
 		std::cerr << "[Server] Send error to client " << client_fd << std::endl;
 	}
 	
+}
+
+RequestType	Response::getRequestType() {
+	return _requestType;
+}
+
+HTTPStatus	Response::getStatus() {
+	return _status;
+}
+
+std::string	Response::getResponse() {
+	return _response;
+}
+
+Route *		Response::getRoute() {
+	return _route;
+}
+
+std::string	Response::getAdjustedPath() {
+	return _adjusted_path;
+}
+
+void		Response::setAdjustedPath(std::string path) {
+	_adjusted_path = path;
+}
+
+void Response::setRoute(Route * route) {
+	this->_route = route;
+}
+
+void		Response::setRequestType(RequestType requestType) {
+	this->_requestType = requestType;
+}
+
+void		Response::setStatus(HTTPStatus status) {
+	this->_status = status;
+}
+
+void		Response::setResponse(std::string response) {
+	this->_response = response;
+}
+
+void		Response::appendResponse(std::string str) {
+	this->_response.append(str);
+}
+
+void Response::send_response(int client_fd) {
+	setResponse(getMessage(getStatus()));
+	
+	std::string response = _route->getHtml(getStatus(), getAdjustedPath());
+
+	std::cout << "[Server] Sending response to client " << client_fd << std::endl;
+	std::cout << "Response: " << response << std::endl;
+
+	std::stringstream ss;
+	ss << response.size();
+	appendResponse(ss.str());
+	appendResponse("\r\n\r\n");
+	appendResponse(response);
+	
+	std::string finalResponse = getResponse();
+	size_t messageSize = finalResponse.size();
+	const char* message = finalResponse.c_str();
+
+	int send_status = send(client_fd, message, messageSize, 0);
+	if (send_status == -1) {
+		std::cerr << "[Server] Send error to client " << client_fd << std::endl;
+	}
 }

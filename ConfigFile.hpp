@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/07 19:14:42 by trimize           #+#    #+#             */
-/*   Updated: 2024/09/14 00:00:40 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/16 21:22:14 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ class ConfigFile
 		int		bodysize;
 		std::string	path;
 		std::string root;
-		std::vector<Route>	routes;
+		std::vector<Route *>	routes;
 		
 		// ConfigFile();
 		ConfigFile(std::string path);
@@ -54,18 +54,18 @@ class ConfigFile
 		std::string	getError();
 		std::string	getHost();
 		std::string	getRoot();
-		std::vector<Route>	getRoutes();
+		std::vector<Route *>	getRoutes();
 
 		RequestType formatType(std::string request);
 		
-		void		addRoute(Route route);
+		void		addRoute(Route * route);
 
 		bool		isAllDigits(const std::string &str);
 		bool		fileExists(const std::string& filePath);
 		void		fillVariables();
 		void		fillRoutes(std::string str);
 		bool		isPathValid(const std::string & path);
-		Route	&	getRoute(std::string path);
+		Route	*	getRoute(std::string path);
 
 		class	InvalidPort : public std::exception {
 		public:

@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 20:56:47 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/14 21:43:05 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/19 17:09:22 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,10 @@ void Request::fillVariables(std::string request) {
 		throw BadRequest();
 	}
 
+	if (path.find("cgi-bin") != std::string::npos) {
+		isCgi = true;
+	}
+
 	_type = formatType(method);
 	if (path[0] == '/' && path.size() > 1) {
 		path = path.substr(1);
@@ -46,10 +50,6 @@ void Request::fillVariables(std::string request) {
 		path = path.substr(0, path.size() - 1);
 	}
 	_path = path;
-
-	if (path.find("cgi-bin") != std::string::npos) {
-		_isCgi = true;
-	}
 
 	std::string line;
 	bool is_first = true;
@@ -76,7 +76,7 @@ void Request::fillVariables(std::string request) {
 }
 
 Request::Request() {
-
+	setIsCgi(false);
 }
 
 Request::~Request() {
@@ -87,20 +87,20 @@ std::string Request::getBody() {
 	return _body;
 }
 
+bool Request::getIsCgi() {
+	return isCgi;
+}
+
+void Request::setIsCgi(bool isCgi) {
+	this->isCgi = isCgi;
+}
+
 std::string Request::getPath() {
 	return _path;
 }
 
 RequestType Request::getType() {
 	return _type;
-}
-
-bool Request::getIsCgi() {
-	return _isCgi;
-}
-
-void Request::setIsCgi(bool isCgi) {
-	_isCgi = isCgi;
 }
 
 std::map<std::string, std::string> Request::getHeaders() {
