@@ -28,6 +28,8 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds);
 std::string read_data_from_socket(int client_fd);
 Response request_dealer(Request & request);
 void add_to_poll_fds(std::vector<pollfd> & poll_fds, int fd);
+void remove_from_poll_fds(std::vector<pollfd> & poll_fds, int fd);
+void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds);
 // void del_from_poll_fds(struct pollfd **poll_fds, int i, int *poll_count);
 
 int main(void)
@@ -74,14 +76,16 @@ int main(void)
 
         // Loop on our array of sockets
         for (size_t i = 0; i < poll_fds.size(); i++) {
-            if ((poll_fds[i].revents & POLLIN) != 1) {
-                // The socket is not ready for reading
-                // stop here and continue the loop
-                continue ;
+            if ((poll_fds[i].revents & POLLIN) != 0) {
+                if (poll_fds[i].fd == server_socket) {
+                    accept_new_connection(server_socket, poll_fds);
+                } else {
+                    handle_client_request(poll_fds[i].fd, poll_fds);
+                }
             }
 
-			std::cout << "Socket " << poll_fds[i].fd << " is ready for I/O operation" << std::endl;
-            accept_new_connection(server_socket, poll_fds);
+			// std::cout << "Socket " << poll_fds[i].fd << " is ready for I/O operation" << std::endl;
+            // accept_new_connection(server_socket, poll_fds);
             
         }
     }
@@ -143,23 +147,17 @@ int create_server_socket(void) {
     return (socket_fd);
 }
 
-void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
-{
-    int client_fd;
+void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds) {
+    std::string buffer = read_data_from_socket(client_fd);
 
-    client_fd = accept(server_socket, NULL, NULL);
-    if (client_fd == -1) {
-		std::cerr << "[Server] Accept error: " << std::endl;
-        return ;
+    if (buffer.empty()) {
+        close(client_fd);
+        remove_from_poll_fds(poll_fds, client_fd);
+        std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
+        return;
     }
-    // add_to_poll_fds(poll_fds, client_fd, poll_count, poll_size);
-	// poll_fds.push_back({client_fd, POLLIN});
-	// add_to_poll_fds(poll_fds, client_fd);
-    (void)poll_fds;
 
-	std::cout << "[Server] Accepted new connection on client socket " << client_fd << std::endl;
-
-	std::string buffer = read_data_from_socket(client_fd);
+    std::cout << "Request receveid: " << buffer << std::endl;
 
     ConfigFile config = ConfigFile::getInstance();
     Request request;
@@ -185,12 +183,29 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
         response.send_response(client_fd);
     }
 
-	close(client_fd);
-	// poll_fds.erase(std::remove_if(poll_fds.begin(), poll_fds.end(), [client_fd](const pollfd & pfd) {
-	// 	return pfd.fd == client_fd;
-	// }), poll_fds.end());
+    if (request.getHeader("Connection").find("keep-alive") == std::string::npos) {
+        close(client_fd);
+        remove_from_poll_fds(poll_fds, client_fd);
+        std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
+    }
+}
 
-    std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
+void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
+{
+    int client_fd;
+
+    client_fd = accept(server_socket, NULL, NULL);
+    if (client_fd == -1) {
+		std::cerr << "[Server] Accept error: " << std::endl;
+        return ;
+    }
+    // add_to_poll_fds(poll_fds, client_fd, poll_count, poll_size);
+	// poll_fds.push_back({client_fd, POLLIN});
+	add_to_poll_fds(poll_fds, client_fd);
+
+	std::cout << "[Server] Accepted new connection on client socket " << client_fd << std::endl;
+
+	handle_client_request(client_fd, poll_fds);
 }
 
 std::string get_directory_path(std::string path) {
@@ -215,9 +230,11 @@ std::string read_data_from_socket(int client_fd)
     if (bytes_read <= 0) {
         if (bytes_read == 0) {
             std::cout << "[Server] Client socket closed connection." << std::endl;
+            return "";
         }
         else {
             std::cerr << "[Server] Recv error: " << std::endl;
+            return "";
         }
     }
     return std::string(buffer);
@@ -297,6 +314,15 @@ void add_to_poll_fds(std::vector<pollfd> & poll_fds, int fd) {
 	new_element.fd = fd;
 	new_element.events = POLLIN;
 	poll_fds.push_back(new_element);
+}
+
+void remove_from_poll_fds(std::vector<pollfd> & poll_fds, int fd) {
+    for (std::vector<pollfd>::iterator it = poll_fds.begin(); it != poll_fds.end(); ++it) {
+        if (it->fd == fd) {
+            poll_fds.erase(it);
+            break;
+        }
+    }
 }
 
 // Remove an fd from the poll_fds array
