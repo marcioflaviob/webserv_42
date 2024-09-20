@@ -18,25 +18,44 @@
 					background-position: 0% 50%;
 				}
 			}
-			text
+			a
 			{
 				color: #7db8ec;
-				font-family: Lato;
+				font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 				position: absolute;
-				margin-bottom: 5em;
-				font-size: 5em;
+				font-size: 2em;
+				margin-bottom: 15em;
 				transition: color 0.5s ease;
+				text-decoration: none;
 			}
-			text:hover
+			a:hover
 			{
 				color: aliceblue;
+				cursor: pointer;
+			}
+			#text1
+			{
+				margin-right : 30em;
+			}
+			#text2
+			{
+				margin-right : 10em;
+			}
+			#text3
+			{
+				margin-left : 13em;
+			}
+			#text4
+			{
+				margin-left : 37em;
 			}
 		</style>
 	</head>
 	<body style="margin: 0; padding: 0; height: 100%; background: linear-gradient(90deg, black, rgb(50, 1, 71)); background-size: 200% 200%; animation: gradientAnimation 8s ease infinite; display: flex; justify-content: center; align-items: center;">
-		<text>
-			SPACE NGIN
-		</text>
+		<a id="text1" class="text" href="/">HOME</a>
+		<a id="text2" class="text" href="/cgi">CGI</a>
+		<a id="text3" class="text" href="/cookies">COOKIES</a>
+		<a id="text4" class="text" href="/upload">UPLOAD</a>
 		<div class="blackhole" style="width: 10em; height: 10em; margin-top: 30em;">
 			<div class="megna" style="width: 100%; height: 100%; border-radius: 100%; background: linear-gradient(#ff4500, #ff4500, #ff9900); box-shadow: 0 0 60px 30px #fcbd3e, 0 0 100px 60px #fd7a4d, 0 0 140px 90px #ff0b6b; display: flex; justify-content: center; align-items: center; filter: blur(5px);">
 				<div class="black" style="width: 90%; height: 90%; border-radius: 45% 50% 50% 50%; background-color: black; transform: rotate(0deg); animation: hole 0.1s linear infinite normal;">

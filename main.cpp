@@ -179,7 +179,7 @@ void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds) {
     }
     catch(const std::exception& e)
     {
-        response = Response(BAD_REQUEST, UNDEFINED);
+        response = Response(BAD_REQUEST, UNDEFINED, request);
         response.send_response(client_fd);
     }
 
@@ -245,7 +245,7 @@ Response request_dealer(Request & request) {
 
     if (config.isPathValid(request.getPath())) {
         if (!config.getRoute(request.getPath())->isMethodAllowed(request.getType())) {
-            return Response(FORBIDDEN, UNDEFINED, config.getRoute(request.getPath()), request.getPath());
+            return Response(FORBIDDEN, UNDEFINED, config.getRoute(request.getPath()), request.getPath(), request);
         }
     }
 
@@ -261,7 +261,7 @@ Response request_dealer(Request & request) {
         if (config.isPathValid(dir)) {
             route = config.getRoute(dir);
             if (!config.getRoute(dir)->isMethodAllowed(request.getType())) {
-                return Response(FORBIDDEN, UNDEFINED, route, request.getPath());
+                return Response(FORBIDDEN, UNDEFINED, route, request.getPath(), request);
             }
             if (request.getPath().find(route->getPath()) == 0) { // Found the path of the route in the request path
                 std::cout << "Got here" << std::endl;
@@ -280,16 +280,16 @@ Response request_dealer(Request & request) {
             }
             struct stat info;
             if (stat(request.getPath().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
-                return Response(NOT_FOUND, UNDEFINED, NULL, request.getPath());
+                return Response(NOT_FOUND, UNDEFINED, NULL, request.getPath(), request);
             }
         }
         else {
             struct stat info;
             if (stat(request.getPath().c_str(), &info) != 0) {
-                return Response(INTERNAL_SERVER_ERROR, UNDEFINED);
+                return Response(INTERNAL_SERVER_ERROR, UNDEFINED, request);
             }
             if (!S_ISDIR(info.st_mode) && !S_ISREG(info.st_mode)) {
-                return Response(NOT_FOUND, UNDEFINED, NULL, request.getPath());
+                return Response(NOT_FOUND, UNDEFINED, NULL, request.getPath(), request);
             }
         }
     }
@@ -298,13 +298,13 @@ Response request_dealer(Request & request) {
 
     switch (request.getType()) {
         case GET:
-            return Response(OK, request.getType(), route, request.getPath());
+            return Response(OK, request.getType(), route, request.getPath(), request);
         case POST:
-            return Response(CREATED, request.getType(), route, request.getPath());
+            return Response(CREATED, request.getType(), route, request.getPath(), request);
         case DELETE:
-            return Response(ACCEPTED, request.getType(), route, request.getPath());
+            return Response(ACCEPTED, request.getType(), route, request.getPath(), request);
         default:
-            return Response(BAD_REQUEST, UNDEFINED, route, request.getPath());
+            return Response(BAD_REQUEST, UNDEFINED, route, request.getPath(), request);
     }
 }
 
