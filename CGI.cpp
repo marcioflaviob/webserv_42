@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:39:55 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/16 19:50:18 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/20 16:06:07 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,13 +85,13 @@ Response CGI::executeCGI()
 	if(pipe(pipes) == -1)
 	{
 		std::cerr << "Pipe failed" << std::endl;
-		return Response(INTERNAL_SERVER_ERROR, _req.getType());
+		return Response(INTERNAL_SERVER_ERROR, _req.getType(), _req);
 	}
 	pid = fork();
 	if (pid == -1)
 	{
 		std::cerr << "Fork failed" << std::endl;
-		return Response(INTERNAL_SERVER_ERROR, _req.getType());
+		return Response(INTERNAL_SERVER_ERROR, _req.getType(), _req);
 	}
 	if (pid == 0)
 	{
@@ -113,7 +113,7 @@ Response CGI::executeCGI()
 		{
 			std::cerr << "CGI failed" << std::endl;
 			
-			return Response(INTERNAL_SERVER_ERROR, _req.getType());
+			return Response(INTERNAL_SERVER_ERROR, _req.getType(), _req);
 		}
 		while ((ret = read(pipes[0], buffer, BufferSize)) > 0)
 		{

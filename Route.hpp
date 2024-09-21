@@ -3,9 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Route.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 20:54:29 by mbrandao          #+#    #+#             */
+/*   Updated: 2024/09/19 16:37:03 by mbrandao         ###   ########.fr       */
 /*   Updated: 2024/09/16 19:58:47 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
@@ -40,7 +41,7 @@ class Route {
 		std::string getPath();
 		std::string	getRoot();
 		std::string	getIndex();
-		std::string getHtml(HTTPStatus status);
+		std::string getHtml(HTTPStatus status, std::string good_path);
 
 		void		addAllowedMethod(RequestType method);
 		void		setPath(std::string path);
@@ -49,7 +50,6 @@ class Route {
 
 		bool		isMethodAllowed(RequestType method);
 
-	
 };
 
 #endif

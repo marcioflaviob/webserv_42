@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:18:15 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/14 22:43:24 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/20 16:09:45 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,10 +21,9 @@
 
 #include "Route.hpp"
 #include "Enums.hpp"
-#include "CGI.hpp"
+#include "Request.hpp"
 
 class Route;
-class CGI;
 
 class Response {
 	private:
@@ -32,26 +31,30 @@ class Response {
 		RequestType _requestType;
 		std::string _response;
 		Route * _route;
-		//bool isCgi;
+		std::string _adjusted_path;
+		Request * _request;
 		
 	public:
-		Response(HTTPStatus status, RequestType requestType);
-		Response(HTTPStatus status, RequestType requestType, Route & route);
+		Response(HTTPStatus status, RequestType requestType, Request & request);
+		Response(HTTPStatus status, RequestType requestType, Route * route, std::string path, Request & request);
 		Response();
 		~Response();
 		
-		std::string	getMessage(HTTPStatus status);
+		std::string	getMessage(HTTPStatus status, int client_fd);
 
 		RequestType	getRequestType();
 		HTTPStatus	getStatus();
-		Route &		getRoute();
+		Route *		getRoute();
+		std::string	getAdjustedPath();
 		std::string	getResponse();
-		bool		getIsCgi();
+		Request &	getRequest();
 		
-		void		setRoute(Route & route);
+		void		setRoute(Route * route);
+		void		setRequest(Request & request);
 		void		setRequestType(RequestType requestType);
 		void		setStatus(HTTPStatus status);
 		void		setResponse(std::string response);
+		void		setAdjustedPath(std::string path);
 		void		appendResponse(std::string response);
 
 		void send_response(int client_fd);
