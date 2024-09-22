@@ -74,8 +74,6 @@ char** CGI::env_map_to_string(){
 	return (env);
 }
 
-
-
 Response CGI::executeCGI()
 {
 	pid_t pid;
