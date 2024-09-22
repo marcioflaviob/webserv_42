@@ -170,6 +170,7 @@ void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds) {
         if (request.getIsCgi()) {
             CGI cgi(request, request.getPath());
             response = cgi.executeCGI();
+            response.setRequest(request);
             response.send_cgi_response(client_fd);
         } else {
             response = request_dealer(request);

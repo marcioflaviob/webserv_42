@@ -60,18 +60,21 @@ char** CGI::env_map_to_string(){
 	{
 		 env[i] = new char[it->first.size() + it->second.size() + 2];
 		 std::string tmp = it->first + "=" + it->second;
-		 for (int j = 0; i < tmp.size(); j++)
+		 size_t j = 0;
+		 while (j < tmp.size())
 		 {
 			env[i][j] = tmp[j];
+			j++;
 		 }
-		// strcpy(env[i], tmp.c_str());
-		//env[i] = (it->first + "=" + it->second).c_str();
+		 env[i][j] = '\0';
 		i++;
 		
 	}
 	env[i] = NULL;
 	return (env);
 }
+
+
 
 Response CGI::executeCGI()
 {
@@ -115,11 +118,13 @@ Response CGI::executeCGI()
 			
 			return Response(INTERNAL_SERVER_ERROR, _req.getType(), _req);
 		}
-		while ((ret = read(pipes[0], buffer, BufferSize)) > 0)
+		while ((ret = read(pipes[0], buffer, BufferSize - 1)) > 0)
 		{
-			std::cout << "BUFFER IS: " << buffer << std::endl;
+			buffer[BufferSize - 1] = '\0';			std::cout << "BUFFER IS: " << buffer << std::endl;
 			responseBody.append(buffer, ret);
-			//memset(buffer, 0, BufferSize);
+			//kinda like memset
+			for(size_t i = 0; i < BufferSize; i++)
+				buffer[i] = '\0';
 		}
 		
 	}
