@@ -1,25 +1,33 @@
 #!/usr/bin/python3
 
-import cgi, os
+import cgi
+import os
 import cgitb; cgitb.enable()
 
 form = cgi.FieldStorage()
 
-fileitem = form['filename']
+#fileitem = form['filename']
 
-if fileitem.filename:
-	fn = os.path.basename(fileitem.filename)
-	open('/tmp/' + fn, 'wb').write(fileitem.file.read())
+if 'filename' in form:
+	fileitem = form['filemane']
+
+	if fileitem.filename:
+		fn = os.path.basename(fileitem.filename)
+		with open('/tmp/' + fn, 'wb') as f:
+			f.write(fileitem.file.read())
 	
-	message = 'The file "' + fn + '" was uploaded successfully'
+		message = f'The file "{fn}" was uploaded successfully'
+	else:
+		'No file was uploaded'
 else:
-	message = 'No file was uploaded'
+	message = 'No file field found in the form'
 
-print ("""\
-Content-Type: text/html\n
+
+print("Content-Type: text/html\n")
+print(f"""
 <html>
 	<body>
-		<p>%s</p>
+		<p>{message}</p>
 	</body>
 </html>
-""" % (message,))
+""")

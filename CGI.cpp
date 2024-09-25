@@ -82,7 +82,10 @@ Response CGI::executeCGI()
 	int ret;
 	char **env = env_map_to_string();
 	Response response;
+	char *const argv[] = {const_cast<char *>(_path.c_str()), NULL};
 
+	std::cout << "Are we executing the cgi?" << std::endl;
+	std::cout << "What's the content length?" << _req.getHeader("Content-Length") << std::endl;
 	if(pipe(pipes) == -1)
 	{
 		std::cerr << "Pipe failed" << std::endl;
@@ -96,7 +99,7 @@ Response CGI::executeCGI()
 	}
 	if (pid == 0)
 	{
-		char *const argv[] = {NULL};
+		
 		dup2(pipes[1], 1);
 		dup2(pipes[0], 0);
 		close(pipes[1]);
@@ -118,7 +121,7 @@ Response CGI::executeCGI()
 		}
 		while ((ret = read(pipes[0], buffer, BufferSize - 1)) > 0)
 		{
-			buffer[BufferSize - 1] = '\0';			std::cout << "BUFFER IS: " << buffer << std::endl;
+			buffer[BufferSize - 1] = '\0';
 			responseBody.append(buffer, ret);
 			//kinda like memset
 			for(size_t i = 0; i < BufferSize; i++)

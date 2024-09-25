@@ -167,6 +167,7 @@ void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds) {
     {
         request.fillVariables(buffer);
         std::cout << "Is CGI: " << request.getIsCgi() << std::endl;
+        std::cout << "CGI path is: " << request.getPath() << std::endl;
         if (request.getIsCgi()) {
             CGI cgi(request, request.getPath());
             response = cgi.executeCGI();
