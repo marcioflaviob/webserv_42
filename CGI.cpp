@@ -17,9 +17,9 @@ CGI::CGI(){}
 CGI::CGI(Request req, std::string path): _path(path)
 {
 	std::cout << "Hello from CGI constructor" << std::endl;
-	std::cout << "What's the reques type?" << req.getType() << std::endl;
+	std::cout << "What's the reques type?" << getType(req.getType()) << std::endl;
 	_req = req;
-	_env["REQUEST_METHOD"] = req.getType();
+	_env["REQUEST_METHOD"] = getType(req.getType());
 	_env["REQUEST_URI"] = req.getPath();
 	_env["SERVER_PROTOCOL"] = "HTTP/1.1";
 	_env["SERVER_SOFTWARE"] = "webserv";
@@ -56,6 +56,21 @@ CGI::~CGI(){}
 
 std::map<std::string, std::string> CGI::getEnv() const{
 	return (_env);
+}
+
+std::string CGI::getType(int type)
+{
+	switch (type)
+	{
+		case 0: 
+			return "GET";
+		case 1:
+			return "POST";
+		case 2:
+			return "DELETE";
+		default:
+			return "UNDEFINED";
+	}
 }
 
 char** CGI::env_map_to_string(){

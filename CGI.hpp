@@ -27,12 +27,14 @@
 class Request;
 class Response;
 
+
 class CGI
 {
 private:
 	std::map<std::string, std::string> _env;
 	std::string _path;
 	Request _req;
+	std::string getType(int type);
 public:
 	CGI(/* args */);
 	CGI(Request req, std::string path);
