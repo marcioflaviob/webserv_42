@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:39:55 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/25 23:15:38 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/26 17:45:38 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,13 +102,14 @@ Response CGI::executeCGI()
 	}
 	if (pid == 0)
 	{
-		
+		std::cout << "Ok are we in the child process?" << std::endl;
 		dup2(pipes[1], STDOUT_FILENO);
 		dup2(pipes[0], STDIN_FILENO);
 		close(pipes[1]);
 		close(pipes[0]);
-		
+		//std::cout << "Did we make it all the way to execve?" << std::endl;
 		execve(_path.c_str(), argv, env);
+		std::cout << "execve failed" << std::endl;
 	}
 	else{
 		char buffer[BufferSize];
