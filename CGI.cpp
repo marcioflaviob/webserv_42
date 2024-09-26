@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
+/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:39:55 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/20 16:06:07 by trimize          ###   ########.fr       */
+/*   Updated: 2024/09/25 23:15:38 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,9 +25,12 @@ CGI::CGI(Request req, std::string path): _path(path)
 	_env["SERVER_PORT"] = "4142";
 	_env["REMOTE_ADDR"] = "";
 	_env["REMOTE_PORT"] = "";
-	_env["SCRIPT_NAME"] = "";
-	_env["PATH_INFO"] = "";
-	_env["PATH_TRANSLATED"] = "";
+	//_env["SCRIPT_NAME"] = "";
+	_env["SCRIPT_NAME"] = _path;
+	// _env["PATH_INFO"] = "";
+	// _env["PATH_TRANSLATED"] = "";
+	_env["PATH_INFO"] = _path;
+	_env["PATH_TRANSLATED"] = _path;
 	_env["QUERY_STRING"] = "";
 	_env["CONTENT_TYPE"] = req.getHeader("Content-Type");
 	_env["CONTENT_LENGTH"] = req.getHeader("Content-Length");
@@ -95,15 +98,16 @@ Response CGI::executeCGI()
 	if (pid == -1)
 	{
 		std::cerr << "Fork failed" << std::endl;
-		return Response(INTERNAL_SERVER_ERROR, _req.getType(), _req);
+		return Response(INTERNAL_SERVER_ERROR, _req.getType(), _req);	
 	}
 	if (pid == 0)
 	{
 		
-		dup2(pipes[1], 1);
-		dup2(pipes[0], 0);
+		dup2(pipes[1], STDOUT_FILENO);
+		dup2(pipes[0], STDIN_FILENO);
 		close(pipes[1]);
 		close(pipes[0]);
+		
 		execve(_path.c_str(), argv, env);
 	}
 	else{
@@ -119,6 +123,7 @@ Response CGI::executeCGI()
 			
 			return Response(INTERNAL_SERVER_ERROR, _req.getType(), _req);
 		}
+		std::cout << "CGI kinda succeded" << std::endl;
 		while ((ret = read(pipes[0], buffer, BufferSize - 1)) > 0)
 		{
 			buffer[BufferSize - 1] = '\0';
@@ -131,6 +136,7 @@ Response CGI::executeCGI()
 	}
 	close (pipes[0]);
 	close(pipes[1]);
+	std::cout << "Response body: " << responseBody << std::endl;
 	for (size_t i = 0; env[i]; i++)
 	{
 		delete [] env[i];
