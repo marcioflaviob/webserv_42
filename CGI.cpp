@@ -29,8 +29,10 @@ CGI::CGI(Request req, std::string path): _path(path)
 	_env["REMOTE_PORT"] = "";
 	//_env["SCRIPT_NAME"] = "";
 	_env["SCRIPT_NAME"] = _path;
+	_env["SCRIPT_FILENAME"] = _path;
 	// _env["PATH_INFO"] = "";
 	// _env["PATH_TRANSLATED"] = "";
+	_env["PATH"] = _path;
 	_env["PATH_INFO"] = _path;
 	_env["PATH_TRANSLATED"] = _path;
 	_env["QUERY_STRING"] = "";
@@ -39,6 +41,9 @@ CGI::CGI(Request req, std::string path): _path(path)
 	_env["AUTH_TYPE"] = "";
 	_env["REMOTE_USER"] = "";
 	_env["REMOTE_IDENT"] = "";
+	_env["GATEWAY_INTERFACE"] = std::string("CGI/1.1");
+	_env["REDIRECT_STATUS"] = "200";
+
 }
 
 CGI::CGI(const CGI &copy)
