@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:39:55 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/26 17:45:38 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/09/26 18:15:15 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@ CGI::CGI(){}
 
 CGI::CGI(Request req, std::string path): _path(path)
 {
+	std::cout << "Hello from CGI constructor" << std::endl;
+	std::cout << "What's the reques type?" << req.getType() << std::endl;
 	_req = req;
 	_env["REQUEST_METHOD"] = req.getType();
 	_env["REQUEST_URI"] = req.getPath();
