@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/07 19:14:42 by trimize           #+#    #+#             */
-/*   Updated: 2024/09/16 21:22:14 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/26 22:22:58 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,20 +21,16 @@
 #include <unistd.h>
 
 #include "Route.hpp"
+#include "ServerConfig.hpp"
 
 class ConfigFile
 {
 	private:
-		int		port;
-		std::string	host;
-		std::string	error;
-		int		bodysize;
-		std::string	path;
-		std::string root;
-		std::vector<Route *>	routes;
 		
+		std::string path;
 		// ConfigFile();
 		ConfigFile(std::string path);
+		std::vector<ServerConfig> servers;
 		// ConfigFile(const ConfigFile &cf);
 		// ConfigFile& operator=(const ConfigFile &cf);
 
@@ -47,74 +43,28 @@ class ConfigFile
 		// Constructors/Destructor
 		~ConfigFile();
 
-		int		getPort();
-		int		getBodySize();
-		void		setPath(std::string path);
-		std::string	getPath();
-		std::string	getError();
-		std::string	getHost();
-		std::string	getRoot();
-		std::vector<Route *>	getRoutes();
+		std::vector<ServerConfig> getServers() const;
+		void parseConfig(const std::string &path);
+
+		// int		getPort();
+		// int		getBodySize();
+		// void		setPath(std::string path);
+		// std::string	getPath();
+		// std::string	getError();
+		// std::string	getHost();
+		// std::string	getRoot();
+		// std::vector<Route *>	getRoutes();
 
 		RequestType formatType(std::string request);
 		
-		void		addRoute(Route * route);
+		// void		addRoute(Route * route);
 
-		bool		isAllDigits(const std::string &str);
-		bool		fileExists(const std::string& filePath);
-		void		fillVariables();
-		void		fillRoutes(std::string str);
-		bool		isPathValid(const std::string & path);
-		Route	*	getRoute(std::string path);
-
-		class	InvalidPort : public std::exception {
-		public:
-			virtual const char* what() const throw() {
-					return ("Port informed in the config file is invalid.");
-				};
-		};
-		
-		class	InvalidHost : public std::exception {
-		public:
-			virtual const char* what() const throw() {
-					return ("Host informed in the config file is invalid.");
-				};
-		};
-
-		class	InvalidErrorFile : public std::exception {
-		public:
-			virtual const char* what() const throw() {
-					return ("Error page informed in the config file is invalid.");
-				};
-		};
-
-		class	InvalidBodySize : public std::exception {
-		public:
-			virtual const char* what() const throw() {
-					return ("Body Size informed in the config file is invalid.");
-				};
-		};
-
-		class	InvalidRoot : public std::exception {
-		public:
-			virtual const char* what() const throw() {
-					return ("Root is not a directory.");
-				};
-		};
-
-		class	InvalidIndex : public std::exception {
-		public:
-			virtual const char* what() const throw() {
-					return ("Index is not a file.");
-				};
-		};
-
-		class	RouteNotFound : public std::exception {
-		public:
-			virtual const char* what() const throw() {
-					return ("Route not found.");
-				};
-		};
+		// bool		isAllDigits(const std::string &str);
+		// bool		fileExists(const std::string& filePath);
+		// void		fillRoutes(std::string str);
+		// bool		isPathValid(const std::string & path);
+		// void		fillVariables();
+		// Route	*	getRoute(std::string path);
 };
 
 #endif

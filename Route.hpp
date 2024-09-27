@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 20:54:29 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/19 16:37:03 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/26 22:33:09 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,10 @@
 #include <fstream>
 
 #include "Response.hpp"
+#include "ServerConfig.hpp"
 #include "Enums.hpp"
 
+class ServerConfig;
 
 class Route {
 	private:
@@ -40,7 +42,7 @@ class Route {
 		std::string	getPath();
 		std::string	getRoot();
 		std::string	getIndex();
-		std::string getHtml(HTTPStatus status, std::string good_path);
+		std::string getHtml(HTTPStatus status, std::string good_path, ServerConfig & server);
 
 		void		addAllowedMethod(RequestType method);
 		void		setPath(std::string path);

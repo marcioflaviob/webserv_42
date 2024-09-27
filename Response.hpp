@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:18:15 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/20 16:09:45 by trimize          ###   ########.fr       */
+/*   Updated: 2024/09/27 14:14:25 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,8 +22,10 @@
 #include "Route.hpp"
 #include "Enums.hpp"
 #include "Request.hpp"
+#include "Client.hpp"
 
 class Route;
+class Client;
 
 class Response {
 	private:
@@ -35,8 +37,8 @@ class Response {
 		Request * _request;
 		
 	public:
-		Response(HTTPStatus status, RequestType requestType, Request & request);
-		Response(HTTPStatus status, RequestType requestType, Route * route, std::string path, Request & request);
+		Response(HTTPStatus status, RequestType requestType, Request * request);
+		Response(HTTPStatus status, RequestType requestType, Route * route, std::string path, Request * request);
 		Response();
 		~Response();
 		
@@ -50,14 +52,14 @@ class Response {
 		Request &	getRequest();
 		
 		void		setRoute(Route * route);
-		void		setRequest(Request & request);
+		void		setRequest(Request * request);
 		void		setRequestType(RequestType requestType);
 		void		setStatus(HTTPStatus status);
 		void		setResponse(std::string response);
 		void		setAdjustedPath(std::string path);
 		void		appendResponse(std::string response);
 
-		void send_response(int client_fd);
+		void send_response(Client & client);
 		void send_cgi_response(int client_fd);
 };
 

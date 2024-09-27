@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/07 19:18:24 by trimize           #+#    #+#             */
-/*   Updated: 2024/09/16 21:30:13 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/26 22:23:50 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ RequestType ConfigFile::formatType(std::string request) {
 ConfigFile::ConfigFile(std::string path)
 {
 	this->path = path;
-    fillVariables();
+    parseConfig(path);
 }
 
 void ConfigFile::initialize(std::string path) {
@@ -82,228 +82,270 @@ ConfigFile::~ConfigFile()
 	
 }
 
-void ConfigFile::setPath(std::string path)
-{
-    this->path = path;
-}
+// void ConfigFile::setPath(std::string path)
+// {
+//     this->path = path;
+// }
 
-void	ConfigFile::fillRoutes(std::string str) {
-    std::ifstream file(str.c_str());
+// void	ConfigFile::fillRoutes(std::string str) {
+//     std::ifstream file(str.c_str());
+//     std::string line;
+//     Route * route;
+//     bool inRoute = false;
+
+//     if (file.is_open())
+//     {
+//         while (std::getline(file, line))
+//         {
+//             ltrim(line);
+//             if (line.find("ROUTE=") == 0)
+//             {
+//                 if (inRoute)
+//                 {
+//                     this->routes.push_back(route);
+//                 }
+//                 inRoute = true;
+//                 route = new Route();
+//                 route->setPath(line.substr(6, line.find(" {") - 6));
+//                 if (route->getPath()[0] == '/' && route->getPath().size() > 1)
+//                     route->setPath(route->getPath().substr(1));
+//                 if (route->getPath().empty())
+//                     route->setPath("/");
+//                 // std::cout << "PATH=" << route->getPath() << std::endl;
+//             }
+//             else if (inRoute)
+//             {
+//                 if (line.find("ALLOW=") == 0)
+//                 {
+//                     std::string methods = line.substr(6);
+//                     std::stringstream ss(methods);
+//                     std::string method;
+//                     while (std::getline(ss, method, ',')) {
+//                         route->addAllowedMethod(formatType(method));
+//                     }
+//                 }
+//                 else if (line.find("ROOT=") == 0)
+//                 {
+//                     route->setRoot(line.substr(5));
+//                     if (route->getRoot()[route->getRoot().size() - 1] != '/')
+//                         route->setRoot(route->getRoot() + "/");
+//                     if (route->getRoot()[0] == '/' && route->getRoot().size() > 1)
+//                         route->setRoot(route->getRoot().substr(1));
+//                 }
+//                 else if (line.find("INDEX=") == 0)
+//                 {
+//                     route->setIndex(line.substr(6));
+//                     std::string index = route->getRoot() + route->getIndex();
+//                     if (index[0] == '/' && index.size() > 1)
+//                         route->setIndex(index.substr(1));
+//                     else
+//                         route->setIndex(index);
+//                     if (route->getIndex().empty())
+//                         route->setIndex("index.html");
+//                     struct stat info;
+//                     if (stat(route->getIndex().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
+//                         std::cout << "Index is " << route->getIndex() << std::endl;
+//                         throw ConfigFile::InvalidIndex();
+//                     }
+//                 }
+//                 else if (line.find("}") == 0)
+//                 {
+//                     this->routes.push_back(route);
+//                     inRoute = false;
+//                 }
+//             }
+//         }
+//         if (inRoute)
+//         {
+//             this->routes.push_back(route);
+//         }
+//     }
+//     else
+//     {
+//         std::cout << "Unable to open config file" << std::endl;
+//     }
+// }
+
+// std::string	ConfigFile::getPath()
+// {
+// 	return(this->path);
+// }
+
+// std::string	ConfigFile::getHost()
+// {
+// 	return(this->host);
+// }
+
+// std::string	ConfigFile::getError()
+// {
+// 	return(this->error);
+// }
+
+// int		ConfigFile::getPort()
+// {
+// 	return(this->port);
+// }
+
+// int		ConfigFile::getBodySize()
+// {
+// 	return(this->bodysize);
+// }
+
+// std::vector<Route *>	ConfigFile::getRoutes()
+// {
+// 	return(this->routes);
+// }
+
+// bool ConfigFile::isPathValid(const std::string & path)
+// {
+//     std::vector<Route *>::iterator it;
+
+//     for (it = this->routes.begin(); it != this->routes.end(); it++)
+//     {
+//         std::cout << "Comparing " << (*it)->getPath() << " with " << path << std::endl;
+//         if ((*it)->getPath() == path)
+//             return true;
+//     }
+//     return false;
+// }
+
+// Route * ConfigFile::getRoute(std::string path) {
+//     std::vector<Route *>::iterator it;
+
+//     for (it = this->routes.begin(); it != this->routes.end(); it++) {
+//         if ((*it)->getPath() == path)
+//             return *it;
+//     }
+//     throw ConfigFile::RouteNotFound();
+// }
+
+// bool		ConfigFile::isAllDigits(const std::string &str)
+// {
+//     for (std::size_t i = 0; i < str.size(); ++i)
+//     {
+// 	if (!isdigit(str[i]))
+// 		return false;
+//     }
+//     return true;
+// }
+
+// bool		ConfigFile::fileExists(const std::string& filePath)
+// {
+//     return (access(filePath.c_str(), F_OK) != -1);
+// }
+
+void ConfigFile::parseConfig(const std::string &path) {
+    std::ifstream file(path.c_str());
+    
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open config file: " + path);
+    }
+
     std::string line;
-    Route * route;
-    bool inRoute = false;
+    std::string serverBlock;
+    bool inServerBlock = false;
 
-    if (file.is_open())
-    {
-        while (std::getline(file, line))
-        {
-            ltrim(line);
-            if (line.find("ROUTE=") == 0)
-            {
-                if (inRoute)
-                {
-                    this->routes.push_back(route);
-                }
-                inRoute = true;
-                route = new Route();
-                route->setPath(line.substr(6, line.find(" {") - 6));
-                if (route->getPath()[0] == '/' && route->getPath().size() > 1)
-                    route->setPath(route->getPath().substr(1));
-                if (route->getPath().empty())
-                    route->setPath("/");
-                // std::cout << "PATH=" << route->getPath() << std::endl;
-            }
-            else if (inRoute)
-            {
-                if (line.find("ALLOW=") == 0)
-                {
-                    std::string methods = line.substr(6);
-                    std::stringstream ss(methods);
-                    std::string method;
-                    while (std::getline(ss, method, ',')) {
-                        route->addAllowedMethod(formatType(method));
-                    }
-                }
-                else if (line.find("ROOT=") == 0)
-                {
-                    route->setRoot(line.substr(5));
-                    if (route->getRoot()[route->getRoot().size() - 1] != '/')
-                        route->setRoot(route->getRoot() + "/");
-                    if (route->getRoot()[0] == '/' && route->getRoot().size() > 1)
-                        route->setRoot(route->getRoot().substr(1));
-                }
-                else if (line.find("INDEX=") == 0)
-                {
-                    route->setIndex(line.substr(6));
-                    std::string index = route->getRoot() + route->getIndex();
-                    if (index[0] == '/' && index.size() > 1)
-                        route->setIndex(index.substr(1));
-                    else
-                        route->setIndex(index);
-                    if (route->getIndex().empty())
-                        route->setIndex("index.html");
-                    struct stat info;
-                    if (stat(route->getIndex().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
-                        std::cout << "Index is " << route->getIndex() << std::endl;
-                        throw ConfigFile::InvalidIndex();
-                    }
-                }
-                else if (line.find("}") == 0)
-                {
-                    this->routes.push_back(route);
-                    inRoute = false;
-                }
-            }
+    while (std::getline(file, line)) {
+        ltrim(line); // Implement a trim function to remove leading/trailing whitespace
+
+        if (line.empty()) {
+            continue; // Skip empty lines and comments
         }
-        if (inRoute)
-        {
-            this->routes.push_back(route);
+
+        if (line == "SERVER [") {
+            inServerBlock = true;
+            serverBlock.clear();
+        } else if (line == "]") {
+            if (inServerBlock) {
+                ServerConfig serverConfig;
+                serverConfig.fillVariables(serverBlock);
+                servers.push_back(serverConfig);
+                inServerBlock = false;
+            }
+        } else if (inServerBlock) {
+            serverBlock += line + "\n";
         }
     }
-    else
-    {
-        std::cout << "Unable to open config file" << std::endl;
+
+    if (inServerBlock) {
+        throw std::runtime_error("Unclosed SERVER block in config file");
     }
 }
 
-std::string	ConfigFile::getPath()
-{
-	return(this->path);
+std::vector<ServerConfig> ConfigFile::getServers() const {
+    return servers;
 }
 
-std::string	ConfigFile::getHost()
-{
-	return(this->host);
-}
+// void ConfigFile::fillVariables()
+// {
+//     std::ifstream file(this->getPath().c_str());
+//     std::string line;
+//     std::size_t pos;
+//     std::string key, value;
 
-std::string	ConfigFile::getError()
-{
-	return(this->error);
-}
+//     if (file.is_open())
+//     {
+//         while (std::getline(file, line))
+//         {
+//             if (line.empty())
+//                 continue;
 
-int		ConfigFile::getPort()
-{
-	return(this->port);
-}
+//             pos = line.find('=');
+//             if (pos == std::string::npos)
+//                 throw std::runtime_error("Invalid configuration line: " + line);
 
-int		ConfigFile::getBodySize()
-{
-	return(this->bodysize);
-}
+//             key = line.substr(0, pos + 1);
+//             value = line.substr(pos + 1);
 
-std::vector<Route *>	ConfigFile::getRoutes()
-{
-	return(this->routes);
-}
-
-bool ConfigFile::isPathValid(const std::string & path)
-{
-    std::vector<Route *>::iterator it;
-
-    for (it = this->routes.begin(); it != this->routes.end(); it++)
-    {
-        std::cout << "Comparing " << (*it)->getPath() << " with " << path << std::endl;
-        if ((*it)->getPath() == path)
-            return true;
-    }
-    return false;
-}
-
-Route * ConfigFile::getRoute(std::string path) {
-    std::vector<Route *>::iterator it;
-
-    for (it = this->routes.begin(); it != this->routes.end(); it++) {
-        if ((*it)->getPath() == path)
-            return *it;
-    }
-    throw ConfigFile::RouteNotFound();
-}
-
-bool		ConfigFile::isAllDigits(const std::string &str)
-{
-    for (std::size_t i = 0; i < str.size(); ++i)
-    {
-	if (!isdigit(str[i]))
-		return false;
-    }
-    return true;
-}
-
-bool		ConfigFile::fileExists(const std::string& filePath)
-{
-    return (access(filePath.c_str(), F_OK) != -1);
-}
-
-void ConfigFile::fillVariables()
-{
-    std::ifstream file(this->getPath().c_str());
-    std::string line;
-    std::size_t pos;
-    std::string key, value;
-
-    if (file.is_open())
-    {
-        while (std::getline(file, line))
-        {
-            if (line.empty())
-                continue;
-
-            pos = line.find('=');
-            if (pos == std::string::npos)
-                throw std::runtime_error("Invalid configuration line: " + line);
-
-            key = line.substr(0, pos + 1);
-            value = line.substr(pos + 1);
-
-            if (key == "PORT=")
-            {
-                std::stringstream ss(value);
-                ss >> this->port;
-                if (this->port <= 0 || this->port > 65535 || !this->isAllDigits(value))
-                    throw ConfigFile::InvalidPort();
-            }
-            else if (key == "HOST=")
-            {
-                this->host = value;
-                if (this->host != "localhost" && this->host != "127.0.0.1")
-                    throw ConfigFile::InvalidHost();
-            }
-            else if (key == "ERROR_PAGE=")
-            {
-                this->error = value;
-                if (!this->fileExists(this->error))
-                    throw ConfigFile::InvalidErrorFile();
-            }
-            else if (key == "BODY_SIZE=")
-            {
-                std::stringstream ss(value);
-                ss >> this->bodysize;
-                if (this->bodysize <= 0 || this->bodysize > 10024 || !this->isAllDigits(value))
-                    throw ConfigFile::InvalidBodySize();
-            }
-            else if (key == "ROOT=")
-            {
-                this->root = value;
-                struct stat info;
-                if (stat(this->root.c_str(), &info) != 0 || !S_ISDIR(info.st_mode))
-                    throw ConfigFile::InvalidRoot();
-            }
-            else if (key == "ROUTE=")
-            {
-                fillRoutes(this->getPath());
-                break; // Assuming ROUTE is the last configuration in the file
-            }
-            else
-            {
-                throw std::runtime_error("Unknown configuration key: " + key);
-            }
-        }
-    }
-    else
-    {
-        std::cout << "Unable to open config file" << std::endl;
-    }
-}
+//             if (key == "PORT=")
+//             {
+//                 std::stringstream ss(value);
+//                 ss >> this->port;
+//                 if (this->port <= 0 || this->port > 65535 || !this->isAllDigits(value))
+//                     throw ConfigFile::InvalidPort();
+//             }
+//             else if (key == "HOST=")
+//             {
+//                 this->host = value;
+//                 if (this->host != "localhost" && this->host != "127.0.0.1")
+//                     throw ConfigFile::InvalidHost();
+//             }
+//             else if (key == "ERROR_PAGE=")
+//             {
+//                 this->error = value;
+//                 if (!this->fileExists(this->error))
+//                     throw ConfigFile::InvalidErrorFile();
+//             }
+//             else if (key == "BODY_SIZE=")
+//             {
+//                 std::stringstream ss(value);
+//                 ss >> this->bodysize;
+//                 if (this->bodysize <= 0 || this->bodysize > 10024 || !this->isAllDigits(value))
+//                     throw ConfigFile::InvalidBodySize();
+//             }
+//             else if (key == "ROOT=")
+//             {
+//                 this->root = value;
+//                 struct stat info;
+//                 if (stat(this->root.c_str(), &info) != 0 || !S_ISDIR(info.st_mode))
+//                     throw ConfigFile::InvalidRoot();
+//             }
+//             else if (key == "ROUTE=")
+//             {
+//                 fillRoutes(this->getPath());
+//                 break; // Assuming ROUTE is the last configuration in the file
+//             }
+//             else
+//             {
+//                 throw std::runtime_error("Unknown configuration key: " + key);
+//             }
+//         }
+//     }
+//     else
+//     {
+//         std::cout << "Unable to open config file" << std::endl;
+//     }
+// }
 
 // void		ConfigFile::fillVariables()
 // {

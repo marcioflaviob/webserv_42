@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:20:57 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/20 16:09:58 by trimize          ###   ########.fr       */
+/*   Updated: 2024/09/27 14:27:21 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,11 +28,11 @@
 #include <iterator>
 #include <iostream>
 
-Response::Response(HTTPStatus status, RequestType requestType, Request & request) : _status(status), _requestType(requestType), _request(&request){
+Response::Response(HTTPStatus status, RequestType requestType, Request * request) : _status(status), _requestType(requestType), _request(request){
 	_route = NULL;
 }
 
-Response::Response(HTTPStatus status, RequestType requestType, Route * route, std::string path, Request & request) : _status(status), _requestType(requestType), _route(route), _adjusted_path(path), _request(&request) {
+Response::Response(HTTPStatus status, RequestType requestType, Route * route, std::string path, Request * request) : _status(status), _requestType(requestType), _route(route), _adjusted_path(path), _request(request) {
 
 }
 
@@ -41,7 +41,7 @@ Response::Response() {
 }
 
 Response::~Response() {
-
+	delete _request;
 }
 
 std::string	sendSetCookies(int id)
@@ -55,12 +55,13 @@ std::string	sendSetCookies(int id)
 }
 
 std::string	Response::getMessage(HTTPStatus status, int client_fd) {
-	std::string str;
-	if (this->_request->getHeader("Cookie").empty())
-		str = sendSetCookies(client_fd);
+	// std::string str;
+	// if (this->_request->getHeader("Cookie").empty())
+	// 	str = sendSetCookies(client_fd);
+	(void)client_fd;
 	switch (status) {
 		case OK:
-			return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n" + str + "Content-Length: ";
+			return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ";
 		case CREATED:
 			return "HTTP/1.1 201 Created\r\nContent-Type: text/html\r\nContent-Length: ";
 		case ACCEPTED:
@@ -80,7 +81,9 @@ std::string	Response::getMessage(HTTPStatus status, int client_fd) {
 		default:
 			return "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/html\r\nContent-Length: ";
 	}
-}void Response::send_cgi_response(int client_fd) {
+}
+
+void Response::send_cgi_response(int client_fd) {
 	std::string response = _response;
 	setResponse(getMessage(getStatus(), client_fd));
 	
@@ -107,7 +110,6 @@ std::string	Response::getMessage(HTTPStatus status, int client_fd) {
 	if (send_status == -1) {
 		std::cerr << "[Server] Send error to client " << client_fd << std::endl;
 	}
-	
 }
 
 RequestType	Response::getRequestType() {
@@ -154,18 +156,22 @@ Request &		Response::getRequest() {
 	return *_request;
 }
 
-void		Response::setRequest(Request & request) {
-	this->_request = &request;
+void		Response::setRequest(Request * request) {
+	this->_request = request;
 }
 
 void		Response::appendResponse(std::string str) {
 	this->_response.append(str);
 }
 
-void Response::send_response(int client_fd) {
-	setResponse(getMessage(getStatus(), client_fd));
+void Response::send_response(Client & client) {
+	int client_fd = client.getFd();
 	
-	std::string response = _route->getHtml(getStatus(), getAdjustedPath());
+	std::string str = getMessage(getStatus(), client_fd);
+
+	setResponse(str);
+	
+	std::string response = _route->getHtml(getStatus(), getAdjustedPath(), client.getServer());
 
 	std::cout << "[Server] Sending response to client " << client_fd << std::endl;
 	std::cout << "Response: " << response << std::endl;

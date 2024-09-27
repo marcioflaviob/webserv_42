@@ -12,6 +12,7 @@
 #include <sstream>
 #include <algorithm>
 #include <vector>
+#include <map>
 #include <iterator>
 #include <iostream>
 #include <sys/stat.h>
@@ -22,42 +23,62 @@
 #include "Request.hpp"
 #include "ConfigFile.hpp"
 #include "CGI.hpp"
+#include "Client.hpp"
+#include "ServerConfig.hpp"
 
-int create_server_socket(void);
-void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds);
+int create_server_socket(ServerConfig & server);
+void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds, std::vector<Client> & clients, ServerConfig & server);
 std::string read_data_from_socket(int client_fd);
-Response request_dealer(Request & request);
-void add_to_poll_fds(std::vector<pollfd> & poll_fds, int fd);
-void remove_from_poll_fds(std::vector<pollfd> & poll_fds, int fd);
-void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds);
+Response * request_dealer(Request * request, Client & client);
+Client & add_to_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd, ServerConfig & server);
+void remove_from_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd);
+void handle_client_request(Client & client, std::vector<pollfd> & poll_fds, std::vector<Client> & clients);
 // void del_from_poll_fds(struct pollfd **poll_fds, int i, int *poll_count);
 
 int main(void)
 {
-    int server_socket;
     int status;
     ConfigFile::initialize("./config.conf");
+    ConfigFile config = ConfigFile::getInstance();
 
 
     // To monitor client sockets:
     // struct pollfd *poll_fds; // Array of socket file descriptors
 	std::vector<pollfd> poll_fds;
+    std::vector<Client> clients;
+    std::vector<int> server_sockets;
+    std::map<int, ServerConfig> server_socket_map;
 
-    // Create server listening socket
-    server_socket = create_server_socket();
-    if (server_socket == -1) {
-        return (1);
+    for(size_t i = 0; i < config.getServers().size(); i++) {
+        int server_socket = create_server_socket(config.getServers()[i]);
+        if (server_socket == -1) {
+            return (1);
+        }
+        status = listen(server_socket, 3000);
+        if (status != 0) {
+            std::cerr << "[Server] Listen error: " << std::endl;
+            return (3);
+        }
+        add_to_poll_fds(poll_fds, clients, server_socket, config.getServers()[i]);
+        server_sockets.push_back(server_socket);
+        server_socket_map[server_socket] = config.getServers()[i];
     }
 
-    // Listen to port via socket
-    status = listen(server_socket, 3000);
-    if (status != 0) {
-		std::cerr << "[Server] Listen error: " << std::endl;
-        return (3);
-    }
+    // // Create server listening socket
+    // server_socket = create_server_socket();
+    // if (server_socket == -1) {
+    //     return (1);
+    // }
 
-    // Add the listening server socket to array
-	add_to_poll_fds(poll_fds, server_socket);
+    // // Listen to port via socket
+    // status = listen(server_socket, 3000);
+    // if (status != 0) {
+	// 	std::cerr << "[Server] Listen error: " << std::endl;
+    //     return (3);
+    // }
+
+    // // Add the listening server socket to array
+	// add_to_poll_fds(poll_fds, clients, server_socket);
 
 	std::cout << "[Server] Set up poll fd array" << std::endl;
 
@@ -74,25 +95,32 @@ int main(void)
             continue;
         }
 
-        // Loop on our array of sockets
-        for (size_t i = 0; i < poll_fds.size(); i++) {
+        for (size_t i = 0; i < clients.size(); i++) {
             if ((poll_fds[i].revents & POLLIN) != 0) {
-                if (poll_fds[i].fd == server_socket) {
-                    accept_new_connection(server_socket, poll_fds);
+                if (std::find(server_sockets.begin(), server_sockets.end(), clients[i].getFd()) != server_sockets.end()) {
+                    accept_new_connection(clients[i].getFd(), poll_fds, clients, server_socket_map[clients[i].getFd()]);
                 } else {
-                    handle_client_request(poll_fds[i].fd, poll_fds);
+                    handle_client_request(clients[i], poll_fds, clients);
+                    clients[i].setStatus(WRITE);
+                    poll_fds[i].events = POLLOUT;
+                }
+            } else if ((poll_fds[i].revents & POLLOUT) != 0) {
+                if (clients[i].getStatus() == WRITE) {
+                    if (clients[i].getRequest().getIsCgi()) {
+                        clients[i].getResponse().send_cgi_response(clients[i].getFd());
+                    } else {
+                        clients[i].getResponse().send_response(clients[i]);
+                    }
+                    clients[i].setStatus(DONE);
+                    poll_fds[i].events = POLLIN;
                 }
             }
-
-			// std::cout << "Socket " << poll_fds[i].fd << " is ready for I/O operation" << std::endl;
-            // accept_new_connection(server_socket, poll_fds);
-            
         }
     }
     return (0);
 }
 
-int create_server_socket(void) {
+int create_server_socket(ServerConfig & server) {
     // Prepare the address and port for the server socket
     struct sockaddr_in sa;
     int socket_fd;
@@ -116,7 +144,7 @@ int create_server_socket(void) {
     hints.ai_family = AF_INET; // IPv4
     hints.ai_socktype = SOCK_STREAM; // TCP
 
-    status = getaddrinfo(config.getHost().c_str(), NULL, &hints, &res);
+    status = getaddrinfo(server.getHost().c_str(), NULL, &hints, &res);
     if (status != 0) {
         std::cerr << "[Server] getaddrinfo error: " << gai_strerror(status) << std::endl;
         return (-1);
@@ -126,7 +154,7 @@ int create_server_socket(void) {
     sa.sin_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr;
     freeaddrinfo(res); // Free the address info structure
 
-    sa.sin_port = htons(config.getPort());
+    sa.sin_port = htons(server.getPort());
 
     // Create listening socket
     socket_fd = socket(sa.sin_family, SOCK_STREAM, 0);
@@ -142,17 +170,19 @@ int create_server_socket(void) {
         std::cerr << "[Server] Bind error" << std::endl;
         return (-1);
     }
-	std::cout << "Bound socket to localhost port " << config.getPort() << std::endl;
+	std::cout << "Bound socket to localhost port " << server.getPort() << std::endl;
 
     return (socket_fd);
 }
 
-void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds) {
+void handle_client_request(Client & client, std::vector<pollfd> & poll_fds, std::vector<Client> & clients) {
+    int client_fd = client.getFd();
+
     std::string buffer = read_data_from_socket(client_fd);
 
     if (buffer.empty()) {
         close(client_fd);
-        remove_from_poll_fds(poll_fds, client_fd);
+        remove_from_poll_fds(poll_fds, clients, client_fd);
         std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
         return;
     }
@@ -160,37 +190,41 @@ void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds) {
     std::cout << "Request receveid: " << buffer << std::endl;
 
     ConfigFile config = ConfigFile::getInstance();
-    Request request;
-    Response response;
+    Request * request = new Request();
+    Response * response = new Response();
 
     try
     {
-        request.fillVariables(buffer);
-        std::cout << "Is CGI: " << request.getIsCgi() << std::endl;
-        if (request.getIsCgi()) {
-            CGI cgi(request, request.getPath());
+        request->fillVariables(buffer);
+        std::cout << "Is CGI: " << request->getIsCgi() << std::endl;
+        if (request->getIsCgi()) {
+            CGI cgi(request, request->getPath());
             response = cgi.executeCGI();
-            response.send_cgi_response(client_fd);
+            response->setRequest(request);
+            // response.send_cgi_response(client_fd);
+            client.setResponse(response);
         } else {
-            response = request_dealer(request);
+            response = request_dealer(request, client);
             // std::cout << "Path corrupted: " << response.getRoute()->getPath() << std::endl;
-            response.send_response(client_fd);
+            // response.send_response(client_fd);
+            client.setResponse(response);
         }
     }
     catch(const std::exception& e)
     {
-        response = Response(BAD_REQUEST, UNDEFINED, request);
-        response.send_response(client_fd);
+        response = new Response(BAD_REQUEST, UNDEFINED, request);
+        client.setResponse(response);
+        // response.send_response(client_fd);
     }
 
-    if (request.getHeader("Connection").find("keep-alive") == std::string::npos) {
+    if (request->getHeader("Connection").find("keep-alive") == std::string::npos) {
         close(client_fd);
-        remove_from_poll_fds(poll_fds, client_fd);
+        remove_from_poll_fds(poll_fds, clients, client_fd);
         std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
     }
 }
 
-void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
+void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds, std::vector<Client> & clients, ServerConfig & server)
 {
     int client_fd;
 
@@ -201,11 +235,13 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
     }
     // add_to_poll_fds(poll_fds, client_fd, poll_count, poll_size);
 	// poll_fds.push_back({client_fd, POLLIN});
-	add_to_poll_fds(poll_fds, client_fd);
+	Client & client = add_to_poll_fds(poll_fds, clients, client_fd, server);
 
 	std::cout << "[Server] Accepted new connection on client socket " << client_fd << std::endl;
 
-	handle_client_request(client_fd, poll_fds);
+	handle_client_request(client, poll_fds, clients);
+    client.setStatus(WRITE);
+    poll_fds.back().events = POLLOUT;
 }
 
 std::string get_directory_path(std::string path) {
@@ -240,12 +276,12 @@ std::string read_data_from_socket(int client_fd)
     return std::string(buffer);
 }
 
-Response request_dealer(Request & request) {
-    ConfigFile config = ConfigFile::getInstance();
+Response * request_dealer(Request * request, Client & client) {
+    ServerConfig config = client.getServer();
 
-    if (config.isPathValid(request.getPath())) {
-        if (!config.getRoute(request.getPath())->isMethodAllowed(request.getType())) {
-            return Response(FORBIDDEN, UNDEFINED, config.getRoute(request.getPath()), request.getPath(), request);
+    if (config.isPathValid(request->getPath())) {
+        if (!config.getRoute(request->getPath())->isMethodAllowed(request->getType())) {
+            return new Response(FORBIDDEN, UNDEFINED, config.getRoute(request->getPath()), request->getPath(), request);
         }
     }
 
@@ -253,73 +289,84 @@ Response request_dealer(Request & request) {
     
     try
     {
-        route = config.getRoute(request.getPath());
+        route = config.getRoute(request->getPath());
     }
     catch(const std::exception& e)
     {
-        std::string dir = get_directory_path(request.getPath());
+        std::string dir = get_directory_path(request->getPath());
         if (config.isPathValid(dir)) {
             route = config.getRoute(dir);
-            if (!config.getRoute(dir)->isMethodAllowed(request.getType())) {
-                return Response(FORBIDDEN, UNDEFINED, route, request.getPath(), request);
+            if (!config.getRoute(dir)->isMethodAllowed(request->getType())) {
+                return new Response(FORBIDDEN, UNDEFINED, route, request->getPath(), request);
             }
-            if (request.getPath().find(route->getPath()) == 0) { // Found the path of the route in the request path
+            if (request->getPath().find(route->getPath()) == 0) { // Found the path of the route in the request path
                 std::cout << "Got here" << std::endl;
                 std::string path;
-                size_t pos = request.getPath().find('/');
+                size_t pos = request->getPath().find('/');
                 if (pos != std::string::npos) {
-                    path = request.getPath().substr(pos + 1);
+                    path = request->getPath().substr(pos + 1);
                 }
                 std::cout << "Path: " << path << std::endl;
-                std::cout << "Previous path: " << request.getPath() << std::endl;
-                request.setPath(path);
+                std::cout << "Previous path: " << request->getPath() << std::endl;
+                request->setPath(path);
             }
-            request.setPath(route->getRoot() + request.getPath());
-            if (request.getPath()[0] == '/' && request.getPath().size() > 1) {
-                request.setPath(request.getPath().substr(1));
+            request->setPath(route->getRoot() + request->getPath());
+            if (request->getPath()[0] == '/' && request->getPath().size() > 1) {
+                request->setPath(request->getPath().substr(1));
             }
             struct stat info;
-            if (stat(request.getPath().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
-                return Response(NOT_FOUND, UNDEFINED, NULL, request.getPath(), request);
+            if (stat(request->getPath().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
+                return new Response(NOT_FOUND, UNDEFINED, NULL, request->getPath(), request);
             }
         }
         else {
             struct stat info;
-            if (stat(request.getPath().c_str(), &info) != 0) {
-                return Response(INTERNAL_SERVER_ERROR, UNDEFINED, request);
+            if (stat(request->getPath().c_str(), &info) != 0) {
+                return new Response(INTERNAL_SERVER_ERROR, UNDEFINED, request);
             }
-            if (!S_ISDIR(info.st_mode) && !S_ISREG(info.st_mode)) {
-                return Response(NOT_FOUND, UNDEFINED, NULL, request.getPath(), request);
+            if ((request->getPath() == "/") || (!S_ISDIR(info.st_mode) && !S_ISREG(info.st_mode))) {
+                return new Response(NOT_FOUND, UNDEFINED, NULL, request->getPath(), request);
             }
         }
     }
 
     std::cout << "All good" << std::endl;
 
-    switch (request.getType()) {
+    switch (request->getType()) {
         case GET:
-            return Response(OK, request.getType(), route, request.getPath(), request);
+            return new Response(OK, request->getType(), route, request->getPath(), request);
         case POST:
-            return Response(CREATED, request.getType(), route, request.getPath(), request);
+            return new Response(CREATED, request->getType(), route, request->getPath(), request);
         case DELETE:
-            return Response(ACCEPTED, request.getType(), route, request.getPath(), request);
+            return new Response(ACCEPTED, request->getType(), route, request->getPath(), request);
         default:
-            return Response(BAD_REQUEST, UNDEFINED, route, request.getPath(), request);
+            return new Response(BAD_REQUEST, UNDEFINED, route, request->getPath(), request);
     }
 }
 
 // Add a new file descriptor to the pollfd array
-void add_to_poll_fds(std::vector<pollfd> & poll_fds, int fd) {
+Client & add_to_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd, ServerConfig & server) {
 	struct pollfd new_element;
 	new_element.fd = fd;
 	new_element.events = POLLIN;
 	poll_fds.push_back(new_element);
+
+    Client new_client(new_element, READ);
+    new_client.setServer(server);
+    clients.push_back(new_client);
+    return clients.back();
 }
 
-void remove_from_poll_fds(std::vector<pollfd> & poll_fds, int fd) {
+void remove_from_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd) {
     for (std::vector<pollfd>::iterator it = poll_fds.begin(); it != poll_fds.end(); ++it) {
         if (it->fd == fd) {
             poll_fds.erase(it);
+            break;
+        }
+    }
+    for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
+        if (it->getFd() == fd) {
+            clients.erase(it);
             break;
         }
     }

@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 23:14:43 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/10 23:15:05 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/20 17:48:05 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,12 @@ enum HTTPStatus {
 	INTERNAL_SERVER_ERROR = 500,
 	NOT_IMPLEMENTED = 501,
 	SERVICE_UNAVAILABLE = 503
+};
+
+enum ClientStatus {
+	READ,
+	WRITE,
+	DONE
 };
 
 #endif

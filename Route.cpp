@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 21:04:39 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/19 16:38:07 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/26 22:26:21 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ std::string	Route::getIndex() {
 	return _index;
 }
 
-std::string Route::getHtml(HTTPStatus status, std::string good_path) {
+std::string Route::getHtml(HTTPStatus status, std::string good_path, ServerConfig & server) {
 	if (status == OK || status == CREATED || status == ACCEPTED) {
 		std::string filePath; 
 		
@@ -85,8 +85,7 @@ std::string Route::getHtml(HTTPStatus status, std::string good_path) {
 		file.close();
 		return content;
 	} else {
-		ConfigFile config = ConfigFile::getInstance();
-		std::string filePath = config.getError();
+		std::string filePath = server.getError();
 		
 		std::ifstream file(filePath.c_str());
 

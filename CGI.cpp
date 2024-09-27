@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:39:55 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/20 16:06:07 by trimize          ###   ########.fr       */
+/*   Updated: 2024/09/27 14:19:19 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,11 @@
 
 CGI::CGI(){}
 
-CGI::CGI(Request req, std::string path): _path(path)
+CGI::CGI(Request * req, std::string path): _path(path)
 {
 	_req = req;
-	_env["REQUEST_METHOD"] = req.getType();
-	_env["REQUEST_URI"] = req.getPath();
+	_env["REQUEST_METHOD"] = req->getType();
+	_env["REQUEST_URI"] = req->getPath();
 	_env["SERVER_PROTOCOL"] = "HTTP/1.1";
 	_env["SERVER_SOFTWARE"] = "webserv";
 	_env["SERVER_NAME"] = "localhost";
@@ -29,8 +29,8 @@ CGI::CGI(Request req, std::string path): _path(path)
 	_env["PATH_INFO"] = "";
 	_env["PATH_TRANSLATED"] = "";
 	_env["QUERY_STRING"] = "";
-	_env["CONTENT_TYPE"] = req.getHeader("Content-Type");
-	_env["CONTENT_LENGTH"] = req.getHeader("Content-Length");
+	_env["CONTENT_TYPE"] = req->getHeader("Content-Type");
+	_env["CONTENT_LENGTH"] = req->getHeader("Content-Length");
 	_env["AUTH_TYPE"] = "";
 	_env["REMOTE_USER"] = "";
 	_env["REMOTE_IDENT"] = "";
@@ -68,25 +68,25 @@ char** CGI::env_map_to_string(){
 	return (env);
 }
 
-Response CGI::executeCGI()
+Response * CGI::executeCGI()
 {
 	pid_t pid;
 	int pipes[2];
 	std::string responseBody;
 	int ret;
 	char **env = env_map_to_string();
-	Response response;
+	Response * response = new Response();
 
 	if(pipe(pipes) == -1)
 	{
 		std::cerr << "Pipe failed" << std::endl;
-		return Response(INTERNAL_SERVER_ERROR, _req.getType(), _req);
+		return new Response(INTERNAL_SERVER_ERROR, _req->getType(), _req);
 	}
 	pid = fork();
 	if (pid == -1)
 	{
 		std::cerr << "Fork failed" << std::endl;
-		return Response(INTERNAL_SERVER_ERROR, _req.getType(), _req);
+		return new Response(INTERNAL_SERVER_ERROR, _req->getType(), _req);
 	}
 	if (pid == 0)
 	{
@@ -108,7 +108,7 @@ Response CGI::executeCGI()
 		{
 			std::cerr << "CGI failed" << std::endl;
 			
-			return Response(INTERNAL_SERVER_ERROR, _req.getType(), _req);
+			return new Response(INTERNAL_SERVER_ERROR, _req->getType(), _req);
 		}
 		while ((ret = read(pipes[0], buffer, BufferSize)) > 0)
 		{
@@ -125,9 +125,9 @@ Response CGI::executeCGI()
 		delete [] env[i];
 	}
 	delete [] env;
-	response.setResponse(responseBody);
-	response.setStatus(OK);
-	response.setRequestType(_req.getType());
+	response->setResponse(responseBody);
+	response->setStatus(OK);
+	response->setRequestType(_req->getType());
 	return response;
 }
 
