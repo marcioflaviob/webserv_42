@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:39:55 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/27 14:19:19 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/27 15:33:38 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@ CGI::CGI(){}
 
 CGI::CGI(Request * req, std::string path): _path(path)
 {
+	size_t boundaryPos = req->getHeader("Content-Type").find("boundary=");
+	std::string boundary = "";
 	_req = req;
 	_env["REQUEST_METHOD"] = req->getType();
 	_env["REQUEST_URI"] = req->getPath();
@@ -34,6 +36,14 @@ CGI::CGI(Request * req, std::string path): _path(path)
 	_env["AUTH_TYPE"] = "";
 	_env["REMOTE_USER"] = "";
 	_env["REMOTE_IDENT"] = "";
+	if (boundaryPos != std::string::npos)
+		boundary = req->getHeader("Content-Type").substr(boundaryPos + 9);
+	else
+	{
+		std::cerr << "Boundary not found in Content-Type header." << std::endl;
+		boundary = "";
+	}
+	_env["BOUNDARY"] = boundary;
 }
 
 CGI::CGI(const CGI &copy)
@@ -51,6 +61,25 @@ CGI::~CGI(){}
 
 std::map<std::string, std::string> CGI::getEnv() const{
 	return (_env);
+}
+
+std::string	CGI::getPath()
+{
+	return (this->_path);
+}
+
+bool isExecutable(const std::string& filePath)
+{
+	struct stat fileStat;
+	
+	// Get file status
+	if (stat(filePath.c_str(), &fileStat) != 0)
+	{
+		std::cerr << "stat failed" << std::endl;
+		return false;
+	}
+	// Check if it's a regular file and if it has execute permissions
+	return S_ISREG(fileStat.st_mode) && (fileStat.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH));
 }
 
 char** CGI::env_map_to_string(){
@@ -74,16 +103,23 @@ char** CGI::env_map_to_string(){
 	return (env);
 }
 
+
 Response * CGI::executeCGI()
 {
 	pid_t pid;
 	int pipes[2];
+	int pipes_2[2];
 	std::string responseBody;
 	int ret;
 	char **env = env_map_to_string();
 	Response * response = new Response();
 
 	if(pipe(pipes) == -1)
+	{
+		std::cerr << "Pipe failed" << std::endl;
+		return new Response(INTERNAL_SERVER_ERROR, _req->getType(), _req);
+	}
+	if(pipe(pipes_2) == -1)
 	{
 		std::cerr << "Pipe failed" << std::endl;
 		return new Response(INTERNAL_SERVER_ERROR, _req->getType(), _req);
@@ -96,38 +132,54 @@ Response * CGI::executeCGI()
 	}
 	if (pid == 0)
 	{
-		char *const argv[] = {NULL};
 		dup2(pipes[1], 1);
-		dup2(pipes[0], 0);
 		close(pipes[1]);
+		dup2(pipes_2[0], 0);
+		close(pipes_2[0]);
+		close(pipes_2[1]);
 		close(pipes[0]);
-		execve(_path.c_str(), argv, env);
+		this->_path = "./" + this->_path;
+		std::string tmp_path = this->_path;
+		std::string tmp = this->_path;
+		std::ifstream script_file;
+		if (isExecutable(_path))
+		{
+			const char *argv[] = {tmp.c_str(), NULL};
+			execve(argv[0], (char *const *)argv, env);	
+		}
+		else
+		{
+			script_file.open(_path.c_str());
+			std::string line;
+			std::getline(script_file, line);
+			tmp = line.erase(0, 2);	
+			const char *argv[] = {tmp.c_str(), tmp_path.c_str(), NULL};
+			execve(argv[0], (char *const *)argv, env);
+		}
 	}
-	else{
+	else
+	{
 		char buffer[BufferSize];
 		int status;
-
-		waitpid(-1, &status, 0);
+		write(pipes_2[1], _req->getRaw().c_str(), _req->getRaw().length());
+		close(pipes_2[1]);
+		close(pipes_2[0]);
 		close(pipes[1]);
-		dup2(pipes[0], 0);
+		waitpid(-1, &status, 0);
 		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
 		{
 			std::cerr << "CGI failed" << std::endl;
-			
 			return new Response(INTERNAL_SERVER_ERROR, _req->getType(), _req);
 		}
-		while ((ret = read(pipes[0], buffer, BufferSize - 1)) > 0)
+		while ((ret = read(pipes[0], buffer, BufferSize)) > 0)
 		{
-			buffer[BufferSize - 1] = '\0';			std::cout << "BUFFER IS: " << buffer << std::endl;
+			//memset(buffer, 0, BufferSize);
+			std::cout << "BUFFER IS: " << buffer << std::endl;
 			responseBody.append(buffer, ret);
-			//kinda like memset
-			for(size_t i = 0; i < BufferSize; i++)
-				buffer[i] = '\0';
 		}
+		close(pipes[0]);
 		
 	}
-	close (pipes[0]);
-	close(pipes[1]);
 	for (size_t i = 0; env[i]; i++)
 	{
 		delete [] env[i];

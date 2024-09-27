@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:20:57 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/27 14:27:21 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/27 15:36:55 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,13 +55,12 @@ std::string	sendSetCookies(int id)
 }
 
 std::string	Response::getMessage(HTTPStatus status, int client_fd) {
-	// std::string str;
-	// if (this->_request->getHeader("Cookie").empty())
-	// 	str = sendSetCookies(client_fd);
-	(void)client_fd;
+	std::string str;
+	if (this->_request->getHeader("Cookie").empty())
+		str = sendSetCookies(client_fd);
 	switch (status) {
 		case OK:
-			return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ";
+			return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n" + str + "Content-Length: ";
 		case CREATED:
 			return "HTTP/1.1 201 Created\r\nContent-Type: text/html\r\nContent-Length: ";
 		case ACCEPTED:

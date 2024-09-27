@@ -16,6 +16,7 @@
 #include <iterator>
 #include <iostream>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #include "Route.hpp"
 #include "Response.hpp"
@@ -28,7 +29,7 @@
 
 int create_server_socket(ServerConfig & server);
 void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds, std::vector<Client> & clients, ServerConfig & server);
-std::string read_data_from_socket(int client_fd);
+std::string read_data_from_socket(Client & client);
 Response * request_dealer(Request * request, Client & client);
 Client & add_to_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd, ServerConfig & server);
 void remove_from_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd);
@@ -177,44 +178,53 @@ int create_server_socket(ServerConfig & server) {
 
 void handle_client_request(Client & client, std::vector<pollfd> & poll_fds, std::vector<Client> & clients) {
     int client_fd = client.getFd();
+    std::string buffer = read_data_from_socket(client);
+ConfigFile config = ConfigFile::getInstance();
+Request * request = new Request();
+Response * response = new Response();
 
-    std::string buffer = read_data_from_socket(client_fd);
-
-    if (buffer.empty()) {
-        close(client_fd);
-        remove_from_poll_fds(poll_fds, clients, client_fd);
-        std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
-        return;
+    if (buffer == "413 Payload Too Large") {
+	Response * responseerror = new Response(PAYLOAD_TOO_LARGE, UNDEFINED, request);
+        client.setResponse(responseerror);
+	return;
     }
-
-    std::cout << "Request receveid: " << buffer << std::endl;
-
-    ConfigFile config = ConfigFile::getInstance();
-    Request * request = new Request();
-    Response * response = new Response();
-
-    try
+    else
     {
-        request->fillVariables(buffer);
-        std::cout << "Is CGI: " << request->getIsCgi() << std::endl;
-        if (request->getIsCgi()) {
-            CGI cgi(request, request->getPath());
-            response = cgi.executeCGI();
-            response->setRequest(request);
-            // response.send_cgi_response(client_fd);
-            client.setResponse(response);
-        } else {
-            response = request_dealer(request, client);
-            // std::cout << "Path corrupted: " << response.getRoute()->getPath() << std::endl;
-            // response.send_response(client_fd);
-            client.setResponse(response);
-        }
-    }
-    catch(const std::exception& e)
-    {
-        response = new Response(BAD_REQUEST, UNDEFINED, request);
-        client.setResponse(response);
-        // response.send_response(client_fd);
+
+	if (buffer.empty()) {
+		close(client_fd);
+		remove_from_poll_fds(poll_fds, clients, client_fd);
+		std::cout << "[Server] Closed connection on client socket" << client_fd << std::endl;
+		return;
+	}
+
+	std::cout << "Request receveid: " << buffer << std::endl;
+
+
+
+	try
+	{
+		request->fillVariables(buffer);
+		std::cout << "Is CGI: " << request->getIsCgi() << std::endl;
+		if (request->getIsCgi()) {
+		CGI cgi(request, request->getPath());
+		response = cgi.executeCGI();
+		response->setRequest(request);
+		// response.send_cgi_response(client_fd);
+		client.setResponse(response);
+		} else {
+		response = request_dealer(request, client);
+		// std::cout << "Path corrupted: " << response.getRoute()->getPath() << std::endl;
+		// response.send_response(client_fd);
+		client.setResponse(response);
+		}
+	}
+	catch(const std::exception& e)
+	{
+		response = new Response(BAD_REQUEST, UNDEFINED, request);
+		client.setResponse(response);
+		// response.send_response(client_fd);
+	}
     }
 
     if (request->getHeader("Connection").find("keep-alive") == std::string::npos) {
@@ -257,23 +267,46 @@ std::string get_directory_path(std::string path) {
     return directory;
 }
 
-std::string read_data_from_socket(int client_fd)
+void setNonBlocking(int socket_fd)
 {
-    char buffer[BUFSIZ];
-    int bytes_read;
+	int flags = fcntl(socket_fd, F_GETFL, 0);
+	if (flags == -1) {
+		std::cerr << "Error getting socket flags" << std::endl;
+		return;
+	}
 
-    bytes_read = recv(client_fd, buffer, BUFSIZ, 0);
-    if (bytes_read <= 0) {
-        if (bytes_read == 0) {
-            std::cout << "[Server] Client socket closed connection." << std::endl;
-            return "";
-        }
-        else {
-            std::cerr << "[Server] Recv error: " << std::endl;
-            return "";
-        }
-    }
-    return std::string(buffer);
+	if (fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+		std::cerr << "Error setting socket to non-blocking mode" << std::endl;
+	}
+}
+
+std::string read_data_from_socket(Client & client)
+{
+	char buffer[100];
+	int bytes_read;
+	int total_bytes = 0;
+	std::string data;
+
+
+	setNonBlocking(client.getFd());
+	while ((bytes_read = recv(client.getFd(), buffer, 100, 0)) > 0)
+	{
+		total_bytes += bytes_read;
+		data.append(buffer, bytes_read);
+	}
+	if (total_bytes >= client.getServer().getBodySize() * 1000000)
+	{
+		data = "413 Payload Too Large";
+		return data;
+	}
+	//if (bytes_read < 0)
+	//{
+	//	std::cerr << "[Server] Recv error." << std::endl;
+	//	return "";
+	//}
+	if (bytes_read == 0)
+		std::cout << "[Server] Client socket closed connection." << std::endl;
+	return data;
 }
 
 Response * request_dealer(Request * request, Client & client) {
