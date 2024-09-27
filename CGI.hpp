@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:40:33 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/27 14:18:22 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/27 15:19:50 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,7 @@ public:
 	CGI &operator=(const CGI &copy);
 	~CGI();
 	std::map<std::string, std::string> getEnv() const;
+	
 	char** env_map_to_string(); 
 	Response * executeCGI();
 };
