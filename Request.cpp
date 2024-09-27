@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
+/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 20:56:47 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/27 15:35:44 by trimize          ###   ########.fr       */
+/*   Updated: 2024/09/19 17:09:22 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,6 @@ void Request::addHeader(std::string key, std::string value) {
 }
 
 void Request::fillVariables(std::string request) {
-	setRaw(request);
 	std::istringstream request_stream(request);
 	std::string method, path;
 	request_stream >> method >> path;
@@ -102,14 +101,6 @@ std::string Request::getPath() {
 
 RequestType Request::getType() {
 	return _type;
-}
-
-std::string Request::getRaw() {
-	return _raw;
-}
-
-void	Request::setRaw(std::string raw) {
-	_raw = raw;
 }
 
 std::map<std::string, std::string> Request::getHeaders() {

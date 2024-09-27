@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/20 17:45:35 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/27 17:12:57 by trimize          ###   ########.fr       */
+/*   Updated: 2024/09/27 14:08:50 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,6 @@ class Client {
 		void 		setPollfd(pollfd pollfd);
 		void		setStatus(ClientStatus status);
 		void		setServer(ServerConfig & server);
-
 
 };
 

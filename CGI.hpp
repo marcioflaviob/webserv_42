@@ -3,18 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:40:33 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/27 15:28:41 by trimize          ###   ########.fr       */
+/*   Updated: 2024/09/27 15:19:50 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
-#ifndef CGI_HPP
-#define CGI_HPP
+#pragma once
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <string.h>
 #include <map>
@@ -23,7 +21,6 @@
 #include "Request.hpp"
 #include "Enums.hpp"
 #include "Response.hpp"
-#include <sys/stat.h>
 
 #define BufferSize 1024
 
@@ -43,11 +40,10 @@ public:
 	CGI(const CGI &copy);
 	CGI &operator=(const CGI &copy);
 	~CGI();
-	std::string	getPath();
 	std::map<std::string, std::string> getEnv() const;
 	
 	char** env_map_to_string(); 
 	Response * executeCGI();
 };
 
-#endif
+
