@@ -35,6 +35,8 @@ private:
 	std::string _path;
 	Request _req;
 	std::string getType(int type);
+	std::string getQuery();
+	std::string getScriptName();
 public:
 	CGI(/* args */);
 	CGI(Request req, std::string path);

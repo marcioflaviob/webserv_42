@@ -28,14 +28,16 @@ CGI::CGI(Request req, std::string path): _path(path)
 	_env["REMOTE_ADDR"] = "";
 	_env["REMOTE_PORT"] = "";
 	//_env["SCRIPT_NAME"] = "";
-	_env["SCRIPT_NAME"] = _path;
-	_env["SCRIPT_FILENAME"] = _path;
+//	_env["SCRIPT_NAME"] = _path;
+	_env["SCRIPT_NAME"] = getScriptName();
+//	_env["SCRIPT_FILENAME"] = _path;
 	// _env["PATH_INFO"] = "";
 	// _env["PATH_TRANSLATED"] = "";
-	_env["PATH"] = _path;
+	_env["PATH"] = getenv("PATH");
 	_env["PATH_INFO"] = _path;
 	_env["PATH_TRANSLATED"] = _path;
-	_env["QUERY_STRING"] = "";
+	//_env["QUERY_STRING"] = "";
+	_env["QUERY_STRING"] = getQuery();
 	_env["CONTENT_TYPE"] = req.getHeader("Content-Type");
 	_env["CONTENT_LENGTH"] = req.getHeader("Content-Length");
 	_env["AUTH_TYPE"] = "";
@@ -61,6 +63,25 @@ CGI::~CGI(){}
 
 std::map<std::string, std::string> CGI::getEnv() const{
 	return (_env);
+}
+
+std::string CGI::getQuery()
+{
+	size_t pos = _req.getPath().find("?");
+
+	if (pos == std::string::npos)
+		return std::string("");
+	return _req.getPath().substr(pos + 1);
+	
+}
+
+std::string CGI::getScriptName()
+{
+	size_t pos = _req.getPath().find("?");
+
+	if (pos == std::string::npos)
+		return _req.getPath();
+	return _req.getPath().substr(0, pos);
 }
 
 std::string CGI::getType(int type)
@@ -111,6 +132,8 @@ Response CGI::executeCGI()
 
 	std::cout << "Are we executing the cgi?" << std::endl;
 	std::cout << "What's the content length?" << _req.getHeader("Content-Length") << std::endl;
+	std::cout << "Is there a query string? " << _env["QUERY_STRING"] << std::endl;
+	std::cout << "What's the script name? " << _env["SCRIPT_NAME"] << std::endl;
 	if(pipe(pipes) == -1)
 	{
 		std::cerr << "Pipe failed" << std::endl;
