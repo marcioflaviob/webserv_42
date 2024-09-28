@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigFile.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/07 19:18:24 by trimize           #+#    #+#             */
-/*   Updated: 2024/09/26 22:23:50 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/27 21:50:53 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -419,3 +419,62 @@ std::vector<ServerConfig> ConfigFile::getServers() const {
 // 	else
 // 		std::cout << "Unable to open config file" << std::endl;
 // }
+
+std::vector<pollfd> & ConfigFile::getPoll_fds() {
+	return poll_fds;
+}
+
+std::vector<Client> & ConfigFile::getClients() {
+	return clients;
+}
+
+std::vector<int> & ConfigFile::getServer_sockets() {
+	return server_sockets;
+}
+
+std::map<int, ServerConfig> & ConfigFile::getServer_socket_map() {
+	return server_socket_map;
+}
+
+void	ConfigFile::setPoll_fds(std::vector<pollfd> poll_fds) {
+	this->poll_fds = poll_fds;
+}
+
+void	ConfigFile::setClients(std::vector<Client> clients) {
+	this->clients = clients;
+}
+
+void	ConfigFile::setServer_sockets(std::vector<int> server_sockets) {
+	this->server_sockets = server_sockets;
+}
+
+void	ConfigFile::setServer_socket_map(std::map<int, ServerConfig> server_socket_map) {
+	this->server_socket_map = server_socket_map;
+}
+
+Client & ConfigFile::add_to_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd, ServerConfig & server) {
+	struct pollfd new_element;
+	new_element.fd = fd;
+	new_element.events = POLLIN;
+	poll_fds.push_back(new_element);
+
+    Client new_client(new_element, READ);
+    new_client.setServer(server);
+    clients.push_back(new_client);
+    return clients.back();
+}
+
+void ConfigFile::remove_from_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd) {
+    for (std::vector<pollfd>::iterator it = poll_fds.begin(); it != poll_fds.end(); ++it) {
+        if (it->fd == fd) {
+            poll_fds.erase(it);
+            break;
+        }
+    }
+    for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
+        if (it->getFd() == fd) {
+            clients.erase(it);
+            break;
+        }
+    }
+}

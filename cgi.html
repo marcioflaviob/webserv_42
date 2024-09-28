@@ -146,14 +146,10 @@
 		<a id="text3" class="text" href="/cookies">COOKIES</a>
 		<a id="text4" class="text" href="/upload">UPLOAD</a>
 		<text id="text5">TEXT ENHANCER</text>
-		<textarea id="userInput" placeholder="Type something here..."></textarea><br>
-		<button id="button-64" role="button" onclick="processInput()"><span class="text">SUBMIT</span></button>
-		<div id="output"></div>
-		<script>
-			function processInput() {
-				var inputText = document.getElementById("userInput").value;
-			}
-		</script>
+		<form method="post" action="/cgi-bin/text_enhancer.py">
+			<input type="text" name="user_input" placeholder="Enter some text">
+			<input type="submit" value="Submit">
+		</form>
 	</body>
 </html>
 

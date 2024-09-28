@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/20 17:45:35 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/27 14:08:50 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/27 23:09:19 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,9 @@ class Client {
 		ClientStatus _status;
 		Response * _response;
 		ServerConfig * _server;
-		
+		int	_totalBytes;
+		std::string _rawRequest;
+	
 	public:
 
 		Client();
@@ -42,11 +44,16 @@ class Client {
 		Request &		getRequest();
 		Response &		getResponse();
 		ServerConfig &		getServer();
+		std::string 		getRawRequest();
+		int			getTotalBytes();
 
 		void 		setResponse(Response * response);
 		void 		setPollfd(pollfd pollfd);
 		void		setStatus(ClientStatus status);
 		void		setServer(ServerConfig & server);
+		void		setRawRequest(std::string raw);
+		void		setTotalBytes(int bytes);
+
 
 };
 

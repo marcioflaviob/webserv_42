@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/20 17:49:37 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/27 14:08:57 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/28 15:22:52 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,16 +14,16 @@
 #include "Response.hpp"
 #include "Request.hpp"
 
-Client::Client() : _response(NULL) {
-
+Client::Client() : _response(NULL), _totalBytes(0) {
+	_rawRequest = "";
 }
 
-Client::Client(pollfd pollfd, ClientStatus status) : _pollfd(pollfd), _status(status), _response(NULL) {
-
+Client::Client(pollfd pollfd, ClientStatus status) : _pollfd(pollfd), _status(status), _response(NULL), _totalBytes(0) {
+	_rawRequest = "";
 }
 
-Client::Client(pollfd pollfd, ClientStatus status, Response & response) : _pollfd(pollfd), _status(status), _response(&response) {
-
+Client::Client(pollfd pollfd, ClientStatus status, Response & response) : _pollfd(pollfd), _status(status), _response(&response), _totalBytes(0) {
+	_rawRequest = "";
 }
 
 Client::~Client() {
@@ -68,4 +68,21 @@ void 		Client::setPollfd(pollfd pollfd) {
 
 void		Client::setStatus(ClientStatus status) {
 	_status = status;
+}
+
+int		Client::getTotalBytes() {
+	return this->_totalBytes;
+}
+
+void		Client::setTotalBytes(int bytes) {
+	this->_totalBytes = bytes;
+}
+
+
+std::string	Client::getRawRequest() {
+	return _rawRequest;
+}
+
+void		Client::setRawRequest(std::string raw) {
+	_rawRequest = raw;
 }

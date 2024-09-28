@@ -3,14 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:20:57 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/28 17:07:04 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/28 19:48:32 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
+#include "ConfigFile.hpp"
+
 #include <errno.h>
 #include <netdb.h>
 #include <poll.h>
@@ -27,8 +29,8 @@
 #include <vector>
 #include <iterator>
 #include <iostream>
-#include <dirent.h> // Include for directory operations
-#include <sys/types.h> // Include for types used in directory operations
+#include <dirent.h>
+#include <sys/types.h>
 
 Response::Response(HTTPStatus status, RequestType requestType, Request * request) : _status(status), _requestType(requestType), _request(request){
 	_route = NULL;
@@ -57,13 +59,12 @@ std::string	sendSetCookies(int id)
 }
 
 std::string	Response::getMessage(HTTPStatus status, int client_fd) {
-	// std::string str;
-	// if (this->_request->getHeader("Cookie").empty())
-	// 	str = sendSetCookies(client_fd);
-	(void)client_fd;
+	std::string str;
+	if (this->_request->getHeader("Cookie").empty())
+		str = sendSetCookies(client_fd);
 	switch (status) {
 		case OK:
-			return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ";
+			return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n" + str + "Content-Length: ";
 		case CREATED:
 			return "HTTP/1.1 201 Created\r\nContent-Type: text/html\r\nContent-Length: ";
 		case ACCEPTED:
@@ -91,12 +92,12 @@ void Response::send_cgi_response(int client_fd) {
 	
 	// std::string response = _response;
 
-	std::cout << "\n\n\n\n\n" << std::endl;
-	std::cout << "Response: " << response << std::endl;
-	std::cout << "\n\n\n\n\n" << std::endl;
+	//std::cout << "\n\n\n\n\n" << std::endl;
+	//std::cout << "Response: " << response << std::endl;
+	//std::cout << "\n\n\n\n\n" << std::endl;
 
-	std::cout << "[Server] Sending response to client " << client_fd << std::endl;
-	std::cout << "Response: " << response << std::endl;
+	//std::cout << "[Server] Sending response to client " << client_fd << std::endl;
+	//std::cout << "Response: " << response << std::endl;
 
 	std::stringstream ss;
 	ss << response.size();
@@ -212,9 +213,7 @@ void Response::send_response(Client & client) {
 	std::string str = getMessage(getStatus(), client_fd);
 
 	setResponse(str);
-
-	std::cout << "Final path: " << getAdjustedPath() << std::endl;
-
+	
 	std::string response;
 
 	if (this->_route != NULL && this->_route->getIndex() == "*AUTO*" && getAdjustedPath() == this->_route->getRoot()) {
@@ -222,10 +221,9 @@ void Response::send_response(Client & client) {
 	} else {
 		response = _route->getHtml(getStatus(), getAdjustedPath(), client.getServer());
 	}
-	
 
 	std::cout << "[Server] Sending response to client " << client_fd << std::endl;
-	std::cout << "Response: " << response << std::endl;
+	//std::cout << "Response: " << response << std::endl;
 
 	std::stringstream ss;
 	ss << response.size();
@@ -241,6 +239,14 @@ void Response::send_response(Client & client) {
 	if (send_status == -1) {
 		std::cerr << "[Server] Send error to client " << client_fd << std::endl;
 	}
+
+	ConfigFile config = ConfigFile::getInstance();
+
+	if (client.getRequest().getHeader("Connection").find("keep-alive") == std::string::npos) {
+		close(client_fd);
+		config.remove_from_poll_fds(config.getPoll_fds(), config.getClients(), client_fd);
+		std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
+    	}
 	client.setResponse(NULL);
 	client.setStatus(DONE);
 }

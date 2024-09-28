@@ -138,6 +138,9 @@
 					min-width: 196px;
 				}
 			}
+			#myFile {
+    				color: white;
+			}
 		</style>
 	</head>
 	<body style="margin: 0; padding: 0; height: 100%; background: linear-gradient(90deg, black, rgb(50, 1, 71)); background-size: 200% 200%; animation: gradientAnimation 8s ease infinite; display: flex; justify-content: center; align-items: center;">
@@ -146,7 +149,7 @@
 		<a id="text3" class="text" href="/cookies">COOKIES</a>
 		<a id="text4" class="text" href="/upload">UPLOAD</a>
 		<text id="text5">FILE UPLOADER</text>
-		<form method="post" enctype="multipart/form-data" action="/cgi-bin/upload-script.cgi">
+		<form method="post" enctype="multipart/form-data" action="/cgi-bin/upload.py">
 			<input type="file" id="myFile" name="cgi">
 			<input type="submit">
 		</form>
@@ -154,6 +157,14 @@
 			function processInput() {
 				var inputText = document.getElementById("userInput").value;
 			}
+			document.addEventListener("DOMContentLoaded", function() {
+				const image = document.getElementById("image");
+
+				// Check if the src attribute is not empty
+				if (image.src && image.src !== "") {
+					image.classList.add("visible");
+				}
+			});
 		</script>
 	</body>
 </html>

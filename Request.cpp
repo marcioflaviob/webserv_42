@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 20:56:47 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/19 17:09:22 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/28 15:29:00 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,10 @@ void Request::addHeader(std::string key, std::string value) {
 }
 
 void Request::fillVariables(std::string request) {
+	setRaw(request);
+	std::cout << std::endl << "This is trying to set the request in the Request class :";
+	std::cout << std::endl << std::endl << "Request Length : " << request.length();
+	std::cout << std::endl << "Raw Length : " << _raw.length() << std::endl << std::endl;
 	std::istringstream request_stream(request);
 	std::string method, path;
 	request_stream >> method >> path;
@@ -98,6 +102,15 @@ void Request::setIsCgi(bool isCgi) {
 std::string Request::getPath() {
 	return _path;
 }
+
+void Request::setRaw(std::string raw) {
+	this->_raw = raw;
+}
+
+std::string Request::getRaw() {
+	return this->_raw;
+}
+
 
 RequestType Request::getType() {
 	return _type;

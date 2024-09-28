@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigFile.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/07 19:14:42 by trimize           #+#    #+#             */
-/*   Updated: 2024/09/26 22:22:58 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/27 21:51:11 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@
 #include <sstream>
 #include <cctype>
 #include <unistd.h>
+#include <vector>
+#include <map>
 
 #include "Route.hpp"
 #include "ServerConfig.hpp"
@@ -28,6 +30,12 @@ class ConfigFile
 	private:
 		
 		std::string path;
+
+		std::vector<pollfd> poll_fds;
+		std::vector<Client> clients;
+		std::vector<int> server_sockets;
+		std::map<int, ServerConfig> server_socket_map;
+
 		// ConfigFile();
 		ConfigFile(std::string path);
 		std::vector<ServerConfig> servers;
@@ -46,25 +54,20 @@ class ConfigFile
 		std::vector<ServerConfig> getServers() const;
 		void parseConfig(const std::string &path);
 
-		// int		getPort();
-		// int		getBodySize();
-		// void		setPath(std::string path);
-		// std::string	getPath();
-		// std::string	getError();
-		// std::string	getHost();
-		// std::string	getRoot();
-		// std::vector<Route *>	getRoutes();
-
 		RequestType formatType(std::string request);
 		
-		// void		addRoute(Route * route);
+		std::vector<pollfd> & getPoll_fds();
+		std::vector<Client> & getClients();
+		std::vector<int> & getServer_sockets();
+		std::map<int, ServerConfig> & getServer_socket_map();
 
-		// bool		isAllDigits(const std::string &str);
-		// bool		fileExists(const std::string& filePath);
-		// void		fillRoutes(std::string str);
-		// bool		isPathValid(const std::string & path);
-		// void		fillVariables();
-		// Route	*	getRoute(std::string path);
+		void	setPoll_fds(std::vector<pollfd> poll_fds);
+		void	setClients(std::vector<Client> clients);
+		void	setServer_sockets(std::vector<int> server_sockets);
+		void	setServer_socket_map(std::map<int, ServerConfig> server_socket_map);
+
+		Client & add_to_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd, ServerConfig & server);
+		void remove_from_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd);
 };
 
 #endif

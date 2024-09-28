@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 20:55:35 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/16 20:56:25 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/27 23:02:31 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ class Request {
 		RequestType _type;
 		std::string _path;
 		std::string _body;
+		std::string _raw;
 		std::map<std::string, std::string> _headers;
 		bool isCgi;
 	
@@ -35,6 +36,7 @@ class Request {
 
 		std::string getBody();
 		std::string getPath();
+		std::string getRaw();
 		RequestType getType();
 		bool getIsCgi();
 		std::map<std::string, std::string> getHeaders();
@@ -43,6 +45,7 @@ class Request {
 		void setBody(std::string body);
 		void setPath(std::string path);
 		void setType(RequestType type);
+		void setRaw(std::string raw);
 		void setIsCgi(bool isCgi);
 		void addHeader(std::string key, std::string value);
 
