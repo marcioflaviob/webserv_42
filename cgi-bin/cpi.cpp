@@ -5,7 +5,7 @@
 using namespace std;
 
 const string ENV[24] = {
-        "COMSPEC", "DOCUMENT_ROOT", "GATEWAY INTERFACE",
+        "COMSPEC", "DOCUMENT_ROOT", "GATEWAY_INTERFACE",
         "HTTP_ACCEPT", "HTTP_ACCEPT_ENCODING",
         "HTTP_ACCEPT_LANGUAGE", "HTTP_CONNECTION",
         "HTTP_HOST", "HTTP_USER_AGENT", "PATH",

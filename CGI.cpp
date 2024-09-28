@@ -43,7 +43,7 @@ CGI::CGI(Request req, std::string path): _path(path)
 	_env["AUTH_TYPE"] = "";
 	_env["REMOTE_USER"] = "";
 	_env["REMOTE_IDENT"] = "";
-	_env["GATEWAY_INTERFACE"] = std::string("CGI/1.1");
+	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	_env["REDIRECT_STATUS"] = "200";
 
 }
@@ -134,6 +134,7 @@ Response CGI::executeCGI()
 	std::cout << "What's the content length?" << _req.getHeader("Content-Length") << std::endl;
 	std::cout << "Is there a query string? " << _env["QUERY_STRING"] << std::endl;
 	std::cout << "What's the script name? " << _env["SCRIPT_NAME"] << std::endl;
+	std::cout << "What's the gateway interface? " << _env["GATEWAY_INTERFACE"] << std::endl;
 	if(pipe(pipes) == -1)
 	{
 		std::cerr << "Pipe failed" << std::endl;
@@ -182,7 +183,7 @@ Response CGI::executeCGI()
 	}
 	close (pipes[0]);
 	close(pipes[1]);
-	std::cout << "Response body: " << responseBody << std::endl;
+	//std::cout << "Response body: " << responseBody << std::endl;
 	for (size_t i = 0; env[i]; i++)
 	{
 		delete [] env[i];
