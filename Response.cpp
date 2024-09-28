@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:20:57 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/27 14:27:21 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/28 17:07:04 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,8 @@
 #include <vector>
 #include <iterator>
 #include <iostream>
+#include <dirent.h> // Include for directory operations
+#include <sys/types.h> // Include for types used in directory operations
 
 Response::Response(HTTPStatus status, RequestType requestType, Request * request) : _status(status), _requestType(requestType), _request(request){
 	_route = NULL;
@@ -164,14 +166,63 @@ void		Response::appendResponse(std::string str) {
 	this->_response.append(str);
 }
 
+std::string		indexHtml(std::string path) {
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        std::cerr << "Error getting current working directory" << std::endl;
+        return "<html><body><h1>Error getting current working directory</h1></body></html>";
+    }
+
+    std::string baseDir(cwd);
+
+    // Adjust the path to use the base directory if the path is "/"
+    if (path == "/") {
+        path = baseDir;
+    } else {
+        path = baseDir + path;
+    }
+
+    std::string html = "<html><head><title>Index of " + path + "</title></head><body>";
+    html += "<h1>Index of " + path + "</h1><ul>";
+
+    DIR *dir;
+    struct dirent *entry;
+
+    if ((dir = opendir(path.c_str())) != NULL) {
+        while ((entry = readdir(dir)) != NULL) {
+            std::string name = entry->d_name;
+            if (entry->d_type == DT_DIR) {
+                name += "/";
+            }
+            html += "<li><a href=\"" + name + "\">" + name + "</a></li>";
+        }
+        closedir(dir);
+    } else {
+        // Could not open directory
+        html += "<li>Could not open directory</li>";
+    }
+
+    html += "</ul></body></html>";
+    return html;
+}
+
 void Response::send_response(Client & client) {
 	int client_fd = client.getFd();
 	
 	std::string str = getMessage(getStatus(), client_fd);
 
 	setResponse(str);
+
+	std::cout << "Final path: " << getAdjustedPath() << std::endl;
+
+	std::string response;
+
+	if (this->_route != NULL && this->_route->getIndex() == "*AUTO*" && getAdjustedPath() == this->_route->getRoot()) {
+		response = indexHtml(this->_route->getRoot());
+	} else {
+		response = _route->getHtml(getStatus(), getAdjustedPath(), client.getServer());
+	}
 	
-	std::string response = _route->getHtml(getStatus(), getAdjustedPath(), client.getServer());
 
 	std::cout << "[Server] Sending response to client " << client_fd << std::endl;
 	std::cout << "Response: " << response << std::endl;
@@ -190,4 +241,6 @@ void Response::send_response(Client & client) {
 	if (send_status == -1) {
 		std::cerr << "[Server] Send error to client " << client_fd << std::endl;
 	}
+	client.setResponse(NULL);
+	client.setStatus(DONE);
 }

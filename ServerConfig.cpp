@@ -6,7 +6,7 @@
 /*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/24 19:24:21 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/26 22:44:21 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/09/28 14:12:42 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,17 +141,19 @@ void	ServerConfig::fillRoutes(std::string str) {
             else if (line.find("INDEX=") == 0)
             {
                 route->setIndex(line.substr(6));
-                std::string index = route->getRoot() + route->getIndex();
-                if (index[0] == '/' && index.size() > 1)
-                    route->setIndex(index.substr(1));
-                else
-                    route->setIndex(index);
-                if (route->getIndex().empty())
-                    route->setIndex("index.html");
-                struct stat info;
-                if (stat(route->getIndex().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
-                    std::cout << "Index is " << route->getIndex() << std::endl;
-                    throw ServerConfig::InvalidIndex();
+                if (route->getIndex() != "*AUTO*") {
+                    std::string index = route->getRoot() + route->getIndex();
+                    if (index[0] == '/' && index.size() > 1)
+                        route->setIndex(index.substr(1));
+                    else
+                        route->setIndex(index);
+                    if (route->getIndex().empty())
+                        route->setIndex("index.html");
+                    struct stat info;
+                    if (stat(route->getIndex().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
+                        std::cout << "Index is " << route->getIndex() << std::endl;
+                        throw ServerConfig::InvalidIndex();
+                    }
                 }
             }
             else if (line.find("}") == 0)
