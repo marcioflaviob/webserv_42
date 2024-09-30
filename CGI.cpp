@@ -16,11 +16,21 @@ CGI::CGI(){}
 
 CGI::CGI(Request req, std::string path): _path(path)
 {
-	std::cout << "Hello from CGI constructor" << std::endl;
-	std::cout << "What's the reques type?" << getType(req.getType()) << std::endl;
+	// std::cout << "Hello from CGI constructor" << std::endl;
+	// std::cout << "What's the reques type?" << getType(req.getType()) << std::endl;
+
 	_req = req;
+	std::map<std::string, std::string> req_headers = req.getHeaders();
+	for (std::map<std::string, std::string>::iterator it = req_headers.begin();
+		it != req_headers.end(); it++)
+		{
+			std::string name = it->first;
+			std::transform(name.begin(), name.end(), name.begin(), ::toupper);
+			std::string key = "HTTP_" + name;
+			_env[key] = it->second;
+		}
 	_env["REQUEST_METHOD"] = getType(req.getType());
-	_env["REQUEST_URI"] = req.getPath();
+	_env["REQUEST_URI"] = "/" + req.getPath();
 	_env["SERVER_PROTOCOL"] = "HTTP/1.1";
 	_env["SERVER_SOFTWARE"] = "webserv";
 	_env["SERVER_NAME"] = "localhost";
@@ -29,7 +39,7 @@ CGI::CGI(Request req, std::string path): _path(path)
 	_env["REMOTE_PORT"] = "";
 	//_env["SCRIPT_NAME"] = "";
 //	_env["SCRIPT_NAME"] = _path;
-	_env["SCRIPT_NAME"] = getScriptName();
+	_env["SCRIPT_NAME"] = "/" + getScriptName();
 //	_env["SCRIPT_FILENAME"] = _path;
 	// _env["PATH_INFO"] = "";
 	// _env["PATH_TRANSLATED"] = "";
@@ -134,7 +144,9 @@ Response CGI::executeCGI()
 	std::cout << "What's the content length?" << _req.getHeader("Content-Length") << std::endl;
 	std::cout << "Is there a query string? " << _env["QUERY_STRING"] << std::endl;
 	std::cout << "What's the script name? " << _env["SCRIPT_NAME"] << std::endl;
+	
 	std::cout << "What's the gateway interface? " << _env["GATEWAY_INTERFACE"] << std::endl;
+	std::cout << "What's the request uri? " << _env["REQUEST_URI"] << std::endl;
 	if(pipe(pipes) == -1)
 	{
 		std::cerr << "Pipe failed" << std::endl;
