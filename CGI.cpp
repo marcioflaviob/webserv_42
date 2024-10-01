@@ -6,7 +6,7 @@
 /*   By: svydrina <svydrina@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:39:55 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/26 18:15:15 by svydrina         ###   ########.fr       */
+/*   Updated: 2024/10/01 21:14:23 by svydrina         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,8 @@ CGI::CGI(Request req, std::string path): _path(path)
 			std::transform(name.begin(), name.end(), name.begin(), ::toupper);
 			std::replace(name.begin(), name.end(), '-', '_');
 			std::string key = "HTTP_" + name;
-			_env[key] = it->second;
+			if (key != "HTTP_CONTENT_TYPE" && key != "HTTP_CONTENT_LENGTH")
+				_env[key] = (it->second).substr(1);
 		}
 	_env["REQUEST_METHOD"] = getType(req.getType());
 	_env["REQUEST_URI"] = "/" + req.getPath();
@@ -57,8 +58,8 @@ CGI::CGI(Request req, std::string path): _path(path)
 	_env["REDIRECT_STATUS"] = "200";
 	if (_env["REQUEST_METHOD"] == "POST")
 	{
-		_env["CONTENT_TYPE"] = req.getHeader("Content-Type");
-		_env["CONTENT_LENGTH"] = req.getHeader("Content-Length");
+		_env["CONTENT_TYPE"] = req.getHeader("Content-Type").substr(1);
+		_env["CONTENT_LENGTH"] = req.getHeader("Content-Length").substr(1);
 	}
 
 }
@@ -140,15 +141,15 @@ void CGI::setEnvVar(std::string key, std::string value)
 	_env[key] = value;
 }
 
-// static void printMap(std::map<std::string, std::string> headers)
-// {
-// 	for(std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); it++)
-// 	{
-// 		// std::cout << CYAN "key: " RESET<< it->first;
-// 		// std::cout << CYAN " value: " RESET << it->second << std::endl;
-// 		std::cout << it->first << "=" << it->second << std::endl;
-// 	}
-// }
+static void printMap(std::map<std::string, std::string> headers)
+{
+	for(std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); it++)
+	{
+		// std::cout << CYAN "key: " RESET<< it->first;
+		// std::cout << CYAN " value: " RESET << it->second << std::endl;
+		std::cout << it->first << "=" << it->second << std::endl;
+	}
+}
 
 Response CGI::executeCGI()
 {
@@ -167,7 +168,7 @@ Response CGI::executeCGI()
 	
 	// std::cout << "What's the gateway interface? " << _env["GATEWAY_INTERFACE"] << std::endl;
 	// std::cout << "What's the request uri? " << _env["REQUEST_URI"] << std::endl;
-	//printMap(_env);
+	printMap(_env);
 
 	std::cout << CYAN"script path is: " RESET << _script_path << std::endl;
 	if(pipe(pipes) == -1)
