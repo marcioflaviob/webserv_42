@@ -26,6 +26,7 @@ CGI::CGI(Request req, std::string path): _path(path)
 		{
 			std::string name = it->first;
 			std::transform(name.begin(), name.end(), name.begin(), ::toupper);
+			std::replace(name.begin(), name.end(), '-', '_');
 			std::string key = "HTTP_" + name;
 			_env[key] = it->second;
 		}

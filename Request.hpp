@@ -21,6 +21,11 @@
 #include <iterator>
 #include <algorithm>
 
+#define RED "\033[31m"
+#define CYAN "\033[36m"
+#define YELLOW "\033[33m"
+#define RESET "\033[0m"
+
 class Request {
 	private:
 		RequestType _type;

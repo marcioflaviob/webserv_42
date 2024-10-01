@@ -164,7 +164,7 @@ void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds) {
         return;
     }
 
-    std::cout << "Request receveid: " << buffer << std::endl;
+    std::cout << RED"Request receveid: " RESET<< buffer << std::endl;
 
     ConfigFile config = ConfigFile::getInstance();
     Request request;
