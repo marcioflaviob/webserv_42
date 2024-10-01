@@ -29,14 +29,14 @@ void Request::addHeader(std::string key, std::string value) {
 	_headers[key] = value;
 }
 
-static void printMap(std::map<std::string, std::string> headers)
-{
-	for(std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); it++)
-	{
-		std::cout << CYAN "key: " RESET<< it->first;
-		std::cout << CYAN " value: " RESET << it->second << std::endl;
-	}
-}
+// static void printMap(std::map<std::string, std::string> headers)
+// {
+// 	for(std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); it++)
+// 	{
+// 		std::cout << CYAN "key: " RESET<< it->first;
+// 		std::cout << CYAN " value: " RESET << it->second << std::endl;
+// 	}
+// }
 
 void Request::fillVariables(std::string request) {
 	std::istringstream request_stream(request);
@@ -82,7 +82,7 @@ void Request::fillVariables(std::string request) {
 		std::string value = line.substr(pos + 1);
 		addHeader(key, value);
 	}
-	printMap(_headers);
+	//printMap(_headers);
 }
 
 Request::Request() {

@@ -36,7 +36,7 @@ std::string read_data_from_socket(int client_fd);
 Response request_dealer(Request & request);
 void add_to_poll_fds(std::vector<pollfd> & poll_fds, int fd);
 void remove_from_poll_fds(std::vector<pollfd> & poll_fds, int fd);
-void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds);
+void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds, std::string client_ip);
 // void del_from_poll_fds(struct pollfd **poll_fds, int i, int *poll_count);
 
 int main(void)
@@ -87,7 +87,7 @@ int main(void)
                 if (poll_fds[i].fd == server_socket) {
                     accept_new_connection(server_socket, poll_fds);
                 } else {
-                    handle_client_request(poll_fds[i].fd, poll_fds);
+                    handle_client_request(poll_fds[i].fd, poll_fds, "");
                 }
             }
 
@@ -154,7 +154,7 @@ int create_server_socket(void) {
     return (socket_fd);
 }
 
-void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds) {
+void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds, std::string client_ip) {
     std::string buffer = read_data_from_socket(client_fd);
 
     if (buffer.empty()) {
@@ -177,6 +177,7 @@ void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds) {
         std::cout << "CGI path is: " << request.getPath() << std::endl;
         if (request.getIsCgi()) {
             CGI cgi(request, request.getPath());
+            cgi.setEnvVar("REMOTE_ADDR", client_ip);
             response = cgi.executeCGI();
             response.setRequest(request);
             response.send_cgi_response(client_fd);
@@ -220,7 +221,7 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
 
 	std::cout << "[Server] Accepted new connection on client socket " << client_fd << std::endl;
 
-	handle_client_request(client_fd, poll_fds);
+	handle_client_request(client_fd, poll_fds, std::string(client_ip));
 }
 
 std::string get_directory_path(std::string path) {

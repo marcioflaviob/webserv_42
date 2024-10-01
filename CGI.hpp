@@ -37,6 +37,7 @@ private:
 	std::string getType(int type);
 	std::string getQuery();
 	std::string getScriptName();
+	std::string _script_path;
 public:
 	CGI(/* args */);
 	CGI(Request req, std::string path);
@@ -46,6 +47,7 @@ public:
 	std::map<std::string, std::string> getEnv() const;
 	
 	char** env_map_to_string(); 
+	void setEnvVar(std::string key, std::string value);
 	Response executeCGI();
 };
 

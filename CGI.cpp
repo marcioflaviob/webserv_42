@@ -20,6 +20,7 @@ CGI::CGI(Request req, std::string path): _path(path)
 	// std::cout << "What's the reques type?" << getType(req.getType()) << std::endl;
 
 	_req = req;
+	_script_path =  getScriptName();
 	std::map<std::string, std::string> req_headers = req.getHeaders();
 	for (std::map<std::string, std::string>::iterator it = req_headers.begin();
 		it != req_headers.end(); it++)
@@ -36,26 +37,29 @@ CGI::CGI(Request req, std::string path): _path(path)
 	_env["SERVER_SOFTWARE"] = "webserv";
 	_env["SERVER_NAME"] = "localhost";
 	_env["SERVER_PORT"] = "4142";
-	_env["REMOTE_ADDR"] = "";
+	//_env["REMOTE_ADDR"] = "";
 	_env["REMOTE_PORT"] = "";
 	//_env["SCRIPT_NAME"] = "";
 //	_env["SCRIPT_NAME"] = _path;
-	_env["SCRIPT_NAME"] = "/" + getScriptName();
+	_env["SCRIPT_NAME"] = "/" + _script_path;
 //	_env["SCRIPT_FILENAME"] = _path;
 	// _env["PATH_INFO"] = "";
 	// _env["PATH_TRANSLATED"] = "";
 	_env["PATH"] = getenv("PATH");
-	_env["PATH_INFO"] = _path;
-	_env["PATH_TRANSLATED"] = _path;
+	//_env["PATH_INFO"] = _path;
+	//_env["PATH_TRANSLATED"] = _path;
 	//_env["QUERY_STRING"] = "";
 	_env["QUERY_STRING"] = getQuery();
-	_env["CONTENT_TYPE"] = req.getHeader("Content-Type");
-	_env["CONTENT_LENGTH"] = req.getHeader("Content-Length");
 	_env["AUTH_TYPE"] = "";
 	_env["REMOTE_USER"] = "";
 	_env["REMOTE_IDENT"] = "";
 	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	_env["REDIRECT_STATUS"] = "200";
+	if (_env["REQUEST_METHOD"] == "POST")
+	{
+		_env["CONTENT_TYPE"] = req.getHeader("Content-Type");
+		_env["CONTENT_LENGTH"] = req.getHeader("Content-Length");
+	}
 
 }
 
@@ -131,6 +135,21 @@ char** CGI::env_map_to_string(){
 	return (env);
 }
 
+void CGI::setEnvVar(std::string key, std::string value)
+{
+	_env[key] = value;
+}
+
+// static void printMap(std::map<std::string, std::string> headers)
+// {
+// 	for(std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); it++)
+// 	{
+// 		// std::cout << CYAN "key: " RESET<< it->first;
+// 		// std::cout << CYAN " value: " RESET << it->second << std::endl;
+// 		std::cout << it->first << "=" << it->second << std::endl;
+// 	}
+// }
+
 Response CGI::executeCGI()
 {
 	pid_t pid;
@@ -139,15 +158,18 @@ Response CGI::executeCGI()
 	int ret;
 	char **env = env_map_to_string();
 	Response response;
-	char *const argv[] = {const_cast<char *>(_path.c_str()), NULL};
+	char *const argv[] = {const_cast<char *>(_script_path.c_str()), NULL};
 
-	std::cout << "Are we executing the cgi?" << std::endl;
-	std::cout << "What's the content length?" << _req.getHeader("Content-Length") << std::endl;
-	std::cout << "Is there a query string? " << _env["QUERY_STRING"] << std::endl;
-	std::cout << "What's the script name? " << _env["SCRIPT_NAME"] << std::endl;
+	// std::cout << "Are we executing the cgi?" << std::endl;
+	// std::cout << "What's the content length?" << _req.getHeader("Content-Length") << std::endl;
+	// std::cout << "Is there a query string? " << _env["QUERY_STRING"] << std::endl;
+	// std::cout << "What's the script name? " << _env["SCRIPT_NAME"] << std::endl;
 	
-	std::cout << "What's the gateway interface? " << _env["GATEWAY_INTERFACE"] << std::endl;
-	std::cout << "What's the request uri? " << _env["REQUEST_URI"] << std::endl;
+	// std::cout << "What's the gateway interface? " << _env["GATEWAY_INTERFACE"] << std::endl;
+	// std::cout << "What's the request uri? " << _env["REQUEST_URI"] << std::endl;
+	//printMap(_env);
+
+	std::cout << CYAN"script path is: " RESET << _script_path << std::endl;
 	if(pipe(pipes) == -1)
 	{
 		std::cerr << "Pipe failed" << std::endl;
@@ -167,8 +189,9 @@ Response CGI::executeCGI()
 		close(pipes[1]);
 		close(pipes[0]);
 		//std::cout << "Did we make it all the way to execve?" << std::endl;
-		execve(_path.c_str(), argv, env);
-		std::cout << "execve failed" << std::endl;
+		//execve(_path.c_str(), argv, env);
+		
+		execve(_script_path.c_str(), argv, env);
 	}
 	else{
 		char buffer[BufferSize];
