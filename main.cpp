@@ -1,5 +1,7 @@
 #include <errno.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,6 +24,11 @@
 #include "Request.hpp"
 #include "ConfigFile.hpp"
 #include "CGI.hpp"
+
+#define RED "\033[31m"
+#define CYAN "\033[36m"
+#define YELLOW "\033[33m"
+#define RESET "\033[0m"
 
 int create_server_socket(void);
 void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds);
@@ -195,12 +202,18 @@ void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds) {
 void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
 {
     int client_fd;
+    struct sockaddr_in client_addr;//esli cho zakomentim
+    socklen_t client_addr_len = sizeof(client_addr);
 
-    client_fd = accept(server_socket, NULL, NULL);
+    client_fd = accept(server_socket, (struct sockaddr*)&client_addr, &client_addr_len);//esli cho menyayem dve poslednie peremennye na NULL
     if (client_fd == -1) {
 		std::cerr << "[Server] Accept error: " << std::endl;
         return ;
     }
+
+    char client_ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, INET_ADDRSTRLEN);
+    std::cout << RED"Client connected from addres: " RESET<< client_ip<< std::endl;
     // add_to_poll_fds(poll_fds, client_fd, poll_count, poll_size);
 	// poll_fds.push_back({client_fd, POLLIN});
 	add_to_poll_fds(poll_fds, client_fd);
