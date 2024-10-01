@@ -1,0 +1,38 @@
+AUTH_TYPE=
+CONTENT_LENGTH=674
+CONTENT_TYPE=multipart/form-data; boundary=----WebKitFormBoundaryRlAcKgE3jDjooBAF
+GATEWAY_INTERFACE=CGI/1.1
+HTTP_ACCEPT=text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+HTTP_ACCEPT_ENCODING=gzip, deflate, br, zstd
+HTTP_ACCEPT_LANGUAGE=fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7,ru;q=0.6,el;q=0.5,es;q=0.4,it;q=0.3,uk;q=0.2,de;q=0.1
+HTTP_CACHE_CONTROL=max-age=0
+HTTP_CONNECTION=keep-alive
+HTTP_COOKIE=adminer_key=ab7547cbaabdaf1843cfc6a5c83f6826; adminer_sid=anjr7l6dhcj6l6bb1anssraver
+HTTP_HOST=localhost:4142
+HTTP_ORIGIN=http://localhost:4142
+HTTP_REFERER=http://localhost:4142/python_upload.html
+HTTP_SEC_CH_UA="Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"
+HTTP_SEC_CH_UA_MOBILE=?0
+HTTP_SEC_CH_UA_PLATFORM="Linux"
+HTTP_SEC_FETCH_DEST=document
+HTTP_SEC_FETCH_MODE=navigate
+HTTP_SEC_FETCH_SITE=same-origin
+HTTP_SEC_FETCH_USER=?1
+HTTP_UPGRADE_INSECURE_REQUESTS=1
+HTTP_USER_AGENT=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36
+PATH=/mnt/nfs/homes/svydrina/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+QUERY_STRING=
+REDIRECT_STATUS=200
+REMOTE_ADDR=127.0.0.1
+REMOTE_IDENT=
+REMOTE_PORT=12345
+REMOTE_USER=
+REQUEST_METHOD=POST
+REQUEST_URI=/cgi-bin/save_file.py
+SCRIPT_NAME=/cgi-bin/save_file.py
+SCRIPT_FILENAME=/path/to/cgi-bin/save_file.py
+SERVER_NAME=localhost
+SERVER_PORT=4142
+SERVER_PROTOCOL=HTTP/1.1
+SERVER_SOFTWARE=webserv
+
