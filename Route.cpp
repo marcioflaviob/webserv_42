@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Route.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 21:04:39 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/10/02 09:54:27 by trimize          ###   ########.fr       */
+/*   Updated: 2024/10/02 20:24:38 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,32 +44,32 @@ std::string	Route::getIndex() {
 
 std::string Route::getHtml(HTTPStatus status, std::string good_path, ServerConfig & server) {
 	if (status == OK || status == CREATED || status == ACCEPTED) {
-		std::string filePath; 
+		std::string filePath = good_path;
 		
-		struct stat info;
-		if (stat(good_path.c_str(), &info) != 0 || !S_ISDIR(info.st_mode)) {
-			//std::cout << "Path is not a directory" << std::endl;
-			if (!S_ISREG(info.st_mode)) {
-				//std::cout << "Root: " << _root << std::endl;
-				filePath = _index;
-				//std::cout << "File path: " << filePath << std::endl;
-				//std::cout << "Path is not a file" << std::endl;
-			}
-			else {
-				filePath = good_path;
-				//std::cout << "Path is a file" << std::endl;
-			}
-		} else {
-			//std::cout << "Path is a directory" << std::endl;
-			filePath = _root + _index;
-		}
+		// struct stat info;
+		// if (stat(good_path.c_str(), &info) != 0 || !S_ISDIR(info.st_mode)) {
+		// 	//std::cout << "Path is not a directory" << std::endl;
+		// 	if (!S_ISREG(info.st_mode)) {
+		// 		//std::cout << "Root: " << _root << std::endl;
+		// 		filePath = _index;
+		// 		//std::cout << "File path: " << filePath << std::endl;
+		// 		//std::cout << "Path is not a file" << std::endl;
+		// 	}
+		// 	else {
+		// 		filePath = good_path;
+		// 		//std::cout << "Path is a file" << std::endl;
+		// 	}
+		// } else {
+		// 	//std::cout << "Path is a directory" << std::endl;
+		// 	filePath = _root + _index;
+		// }
 
-		if (filePath[0] == '/') {
-			filePath = filePath.substr(1);
-		}
-		if (filePath.empty()) {
-			filePath = "index.html";
-		}
+		// if (filePath[0] == '/') {
+		// 	filePath = filePath.substr(1);
+		// }
+		// if (filePath.empty()) {
+		// 	filePath = "index.html";
+		// }
 
 		//std::cout << "File path: " << filePath << std::endl;
 		

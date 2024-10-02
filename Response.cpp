@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:20:57 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/10/02 09:54:02 by trimize          ###   ########.fr       */
+/*   Updated: 2024/10/02 21:12:59 by mbrandao         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@
 #include <iostream>
 #include <dirent.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 Response::Response(HTTPStatus status, RequestType requestType, Request * request) : _status(status), _requestType(requestType), _request(request){
 	_route = NULL;
@@ -176,6 +177,10 @@ std::string		indexHtml(std::string path) {
 
     std::string baseDir(cwd);
 
+	if (baseDir[baseDir.size() - 1] != '/') {
+		baseDir += "/";
+	}
+
     // Adjust the path to use the base directory if the path is "/"
     if (path == "/") {
         path = baseDir;
@@ -214,9 +219,63 @@ void Response::send_response(Client & client) {
 
 	setResponse(str);
 	
+	if (getStatus() == OK) {
+		struct stat info;
+		if (stat(getAdjustedPath().c_str(), &info) != 0 || !S_ISDIR(info.st_mode)) {
+			std::cout << "Path is not a directory" << std::endl;
+			if (!S_ISREG(info.st_mode)) {
+				setAdjustedPath(getRoute()->getIndex());
+				std::cout << "Path is not a file" << std::endl;
+			}
+			else {
+				std::cout << "Path is a file" << std::endl;
+				if (getAdjustedPath()[0] == '/') {
+					setAdjustedPath(getAdjustedPath().substr(1));
+				}
+			}
+		// } else {
+			// std::cout << "Path is a directory" << std::endl;
+			if (getRoute()->getIndex() == "*AUTO*" && (!S_ISDIR(info.st_mode) && !S_ISREG(info.st_mode))) {
+				std::string tmp = getAdjustedPath();
+
+				if (tmp == "*AUTO*") {
+					tmp = "";
+				} else if (tmp[tmp.size() - 1] != '/') {
+					tmp += "/";
+				}
+				if (tmp[0] == '/') {
+					tmp = tmp.substr(1);
+				}
+
+				
+				setAdjustedPath(getRoute()->getRoot() + tmp);
+
+				std::cout << "Adjusted path crazy scenario: " << getAdjustedPath() << std::endl;
+			} else if (S_ISDIR(info.st_mode) /*|| S_ISREG(info.st_mode)*/) {
+				setAdjustedPath(getRoute()->getRoot() + getRoute()->getIndex());
+			}
+		}
+
+		if (getAdjustedPath()[0] == '/') {
+			setAdjustedPath(getAdjustedPath().substr(1));
+		}
+		if (getAdjustedPath().empty()) {
+			setAdjustedPath("index.html");
+		}
+	}
+
 	std::string response;
 
-	if (this->_route != NULL && this->_route->getIndex() == "*AUTO*" && getAdjustedPath() == this->_route->getRoot()) {
+	struct stat info;
+	stat(getAdjustedPath().c_str(), &info);
+
+	if (!S_ISREG(info.st_mode)) {
+		std::cout << "Path is not a file" << std::endl;
+	}
+
+	if (this->_route != NULL && this->_route->getIndex() == "*AUTO*" && (!S_ISREG(info.st_mode) || getAdjustedPath() == "index.html")) {
+		if (getAdjustedPath() == "index.html")
+			setAdjustedPath(this->_route->getRoot());
 		response = indexHtml(this->_route->getRoot());
 	} else {
 		response = _route->getHtml(getStatus(), getAdjustedPath(), client.getServer());
@@ -247,7 +306,7 @@ void Response::send_response(Client & client) {
 		close(client_fd);
 		config.remove_from_poll_fds(config.getPoll_fds(), config.getClients(), client_fd);
 		//std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
-    	}
+    }
 	client.setResponse(NULL);
 	if (!client.getError())
 		client.setStatus(DONE);
