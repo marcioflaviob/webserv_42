@@ -84,7 +84,7 @@ int main(void)
     // // Add the listening server socket to array
 	// add_to_poll_fds(poll_fds, clients, server_socket);
 
-	std::cout << "[Server] Set up poll fd array" << std::endl;
+	//std::cout << "[Server] Set up poll fd array" << std::endl;
 
     while (1) { // Main loop
         // Poll sockets to see if they are ready (2 second timeout)
@@ -96,7 +96,7 @@ int main(void)
         }
         else if (status == 0) {
             // None of the sockets are ready
-			std::cout << "[Server] Waiting..." << std::endl;
+			//std::cout << "[Server] Waiting..." << std::endl;
             continue;
         }
 
@@ -116,7 +116,8 @@ int main(void)
                     } else {
                         clients[i].getResponse().send_response(clients[i]);
                     }
-                    clients[i].setStatus(DONE);
+		    if (clients[i].getError())
+                   	clients[i].setStatus(DONE);
                     poll_fds[i].events = POLLIN;
                 }
             } else if (poll_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL)) {
@@ -188,51 +189,59 @@ int create_server_socket(ServerConfig & server) {
         std::cerr << "[Server] Bind error" << std::endl;
         return (-1);
     }
-	std::cout << "Bound socket to localhost port " << server.getPort() << std::endl;
+	//std::cout << "Bound socket to localhost port " << server.getPort() << std::endl;
 
     return (socket_fd);
 }
 
-void handle_client_request(Client & client, std::vector<pollfd> & poll_fds, std::vector<Client> & clients) {
-    int client_fd = client.getFd();
+void handle_client_request(Client & client, std::vector<pollfd> & poll_fds, std::vector<Client> & clients)
+{
+	int client_fd = client.getFd();
 	Request * request = new Request();
 	int bytes = read_data_from_socket(client);
 
 
-    if (client.getRawRequest() == "413 Payload Too Large") {
+	if (client.getRawRequest() == "413 Payload Too Large")
+	{
 		Response * responseerror = new Response(PAYLOAD_TOO_LARGE, UNDEFINED, request);
-			client.setResponse(responseerror);
+		client.setResponse(responseerror);
+		client.setStatus(WRITE);
+		poll_fds.back().events = POLLOUT;
+		client.setRawRequest("");
+		client.setTotalBytes(0);
 		return;
-    }
+	}
 
 	ConfigFile config = ConfigFile::getInstance();
 
 	if (client.getRawRequest().empty()) {
 		close(client_fd);
 		config.remove_from_poll_fds(poll_fds, clients, client_fd);
-		std::cout << "[Server] Closed connection on client socket" << client_fd << std::endl;
+		//std::cout << "[Server] Closed connection on client socket" << client_fd << std::endl;
 		return;
 	}
 
 	//std::cout << "Request receveid: " << client.getRawRequest() << std::endl;
 
-	if (bytes < 4096)
+	if ((bytes < 4096 && client.getContentLength() == 0 && !client.getError()) || (client.getContentLength() < client.getTotalBytes() && !client.getError()))
 	{
 		Response * response = new Response();
-		
 		try
 		{
-			std::cout << "This is right after reading the entire request :";
-			std::cout << std::endl << std::endl << "Request Length : " << client.getRawRequest().length() << std::endl << "Total bytes read : " << client.getTotalBytes() << std::endl << std::endl;
+			//std::cout << "This is right after reading the entire request :";
+			//std::cout << std::endl << std::endl << "Request Length : " << client.getRawRequest().length() << std::endl << "Total bytes read : " << client.getTotalBytes() << std::endl << std::endl;
 			request->fillVariables(client.getRawRequest());
 			//std::cout << "Is CGI: " << request->getIsCgi() << std::endl;
-			if (request->getIsCgi()) {
+			if (request->getIsCgi())
+			{
 				CGI cgi(request, request->getPath());
 				response = cgi.executeCGI();
 				response->setRequest(request);
 				// response.send_cgi_response(client_fd);
 				client.setResponse(response);
-			} else {
+			}
+			else
+			{
 				response = request_dealer(request, client);
 				// std::cout << "Path corrupted: " << response.getRoute()->getPath() << std::endl;
 				// response.send_response(client_fd);
@@ -270,7 +279,7 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds, st
 
 	Client & client = config.add_to_poll_fds(poll_fds, clients, client_fd, server);
 
-	std::cout << "[Server] Accepted new connection on client socket " << client_fd << std::endl;
+	//std::cout << "[Server] Accepted new connection on client socket " << client_fd << std::endl;
 
 	handle_client_request(client, poll_fds, clients);
     //if (client.getStatus() == WRITE)
@@ -311,22 +320,37 @@ int	read_data_from_socket(Client & client)
 
 	//setNonBlocking(client.getFd());
 	bytes_read = recv(client.getFd(), buffer, 4096, 0);
-
 	client.setTotalBytes(client.getTotalBytes() + bytes_read);
 	client.setRawRequest(client.getRawRequest().append(buffer, bytes_read));
-	
+	if (client.getRawRequest().substr(0, 4) == "POST")
+	{
+		std::string content_length_key = "Content-Length: ";
+		size_t pos = client.getRawRequest().find(content_length_key);
+		if (pos != std::string::npos)
+		{
+			pos += content_length_key.length();
+			size_t end_pos = client.getRawRequest().find("\r\n", pos);
+        		std::string content_length_value = client.getRawRequest().substr(pos, end_pos - pos);
+       			int content_length = std::atoi(content_length_value.c_str());
+			client.setContentLength(content_length);
+			if (client.getContentLength() > client.getServer().getBodySize() * 1000000)
+			{
+				client.setRawRequest("413 Payload Too Large");
+				client.setError(true);
+			}
+		}
+	}
+	if (client.getError() && client.getTotalBytes() >= client.getContentLength())
+		client.setError(false);
 	//std::cout << std::endl << std::endl << "This is Right after reading :" << std::endl << std::endl;
 	//std::cout << "Buffer :" << std::endl << buffer << std::endl << std::endl;
 	//std::cout << "Request :" << std::endl << client.getRawRequest() << std::endl << std::endl;
-
-	if (client.getTotalBytes() >= client.getServer().getBodySize() * 1000000)
-		client.setRawRequest("413 Payload Too Large");
 	//if (bytes_read < 0)
 	//{
 	//	std::cerr << "[Server] Recv error." << std::endl;
 	//	return "";
 	//}
-	//if (bytes_read == 0 && client.getTotalBytes)
+	//if (bytes_read == 0 && client.getTotalBytes())
 	//	std::cout << "[Server] Client socket closed connection." << std::endl;
 	return bytes_read;
 }
@@ -355,14 +379,14 @@ Response * request_dealer(Request * request, Client & client) {
                 return new Response(FORBIDDEN, UNDEFINED, route, request->getPath(), request);
             }
             if (request->getPath().find(route->getPath()) == 0) { // Found the path of the route in the request path
-                std::cout << "Got here" << std::endl;
+                //std::cout << "Got here" << std::endl;
                 std::string path;
                 size_t pos = request->getPath().find('/');
                 if (pos != std::string::npos) {
                     path = request->getPath().substr(pos + 1);
                 }
-                std::cout << "Path: " << path << std::endl;
-                std::cout << "Previous path: " << request->getPath() << std::endl;
+                //std::cout << "Path: " << path << std::endl;
+                //std::cout << "Previous path: " << request->getPath() << std::endl;
                 request->setPath(path);
             }
             request->setPath(route->getRoot() + request->getPath());
@@ -385,7 +409,7 @@ Response * request_dealer(Request * request, Client & client) {
         }
     }
 
-    std::cout << "All good" << std::endl;
+//    std::cout << "All good" << std::endl;
 
     switch (request->getType()) {
         case GET:

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo "Content-Type: text/html"
-echo ""
 echo "<html>"
 echo "<head>"
 echo "<title>My Simple HTML Page</title>"

@@ -161,7 +161,6 @@ print(f"""
             <input type="file" id="myFile" name="cgi">
             <input type="submit">
         </form>
-        <img id="uploadedImage" src="{image_url}" alt="Uploaded Image" style="max-width: 20%; height: auto; margin-top: 600px; position: absolute;">
         <script>
             function processInput() {{
                 var inputText = document.getElementById("userInput").value;

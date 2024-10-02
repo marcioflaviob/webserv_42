@@ -6,7 +6,7 @@
 /*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:20:57 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/28 19:48:32 by trimize          ###   ########.fr       */
+/*   Updated: 2024/10/02 09:54:02 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -222,7 +222,7 @@ void Response::send_response(Client & client) {
 		response = _route->getHtml(getStatus(), getAdjustedPath(), client.getServer());
 	}
 
-	std::cout << "[Server] Sending response to client " << client_fd << std::endl;
+	//std::cout << "[Server] Sending response to client " << client_fd << std::endl;
 	//std::cout << "Response: " << response << std::endl;
 
 	std::stringstream ss;
@@ -242,11 +242,13 @@ void Response::send_response(Client & client) {
 
 	ConfigFile config = ConfigFile::getInstance();
 
-	if (client.getRequest().getHeader("Connection").find("keep-alive") == std::string::npos) {
+	if (client.getRequest().getHeader("Connection").find("keep-alive") == std::string::npos && !client.getError())
+	{
 		close(client_fd);
 		config.remove_from_poll_fds(config.getPoll_fds(), config.getClients(), client_fd);
-		std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
+		//std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
     	}
 	client.setResponse(NULL);
-	client.setStatus(DONE);
+	if (!client.getError())
+		client.setStatus(DONE);
 }

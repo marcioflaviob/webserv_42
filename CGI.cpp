@@ -6,7 +6,7 @@
 /*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:39:55 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/28 18:48:05 by trimize          ###   ########.fr       */
+/*   Updated: 2024/10/02 19:49:32 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ CGI::CGI(Request * req, std::string path): _path(path)
 		boundary = req->getHeader("Content-Type").substr(boundaryPos + 9);
 	else
 	{
-		std::cerr << "Boundary not found in Content-Type header." << std::endl;
+		//std::cerr << "Boundary not found in Content-Type header." << std::endl;
 		boundary = "";
 	}
 	_env["BOUNDARY"] = boundary;
@@ -113,8 +113,8 @@ Response * CGI::executeCGI()
 	int ret;
 	char **env = env_map_to_string();
 	Response * response = new Response();
-	std::cout << "This is in cgi :";
-	std::cout << std::endl << std::endl << "Request Length : " << _req->getRaw() << std::endl << std::endl;
+	//std::cout << "This is in cgi :";
+	//std::cout << std::endl << std::endl << "Request Length : " << _req->getRaw() << std::endl << std::endl;
 	if(pipe(pipes) == -1)
 	{
 		std::cerr << "Pipe failed" << std::endl;
@@ -166,7 +166,7 @@ Response * CGI::executeCGI()
 		close(pipes_2[1]);
 		close(pipes_2[0]);
 		close(pipes[1]);
-		waitpid(-1, &status, 0);
+		waitpid(-1, &status, WNOHANG);
 		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
 		{
 			std::cerr << "CGI failed" << std::endl;

@@ -6,7 +6,7 @@
 /*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 20:56:47 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/28 15:29:00 by trimize          ###   ########.fr       */
+/*   Updated: 2024/10/02 09:53:53 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,9 +31,9 @@ void Request::addHeader(std::string key, std::string value) {
 
 void Request::fillVariables(std::string request) {
 	setRaw(request);
-	std::cout << std::endl << "This is trying to set the request in the Request class :";
-	std::cout << std::endl << std::endl << "Request Length : " << request.length();
-	std::cout << std::endl << "Raw Length : " << _raw.length() << std::endl << std::endl;
+	//std::cout << std::endl << "This is trying to set the request in the Request class :";
+	//std::cout << std::endl << std::endl << "Request Length : " << request.length();
+	//std::cout << std::endl << "Raw Length : " << _raw.length() << std::endl << std::endl;
 	std::istringstream request_stream(request);
 	std::string method, path;
 	request_stream >> method >> path;

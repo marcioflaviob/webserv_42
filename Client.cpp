@@ -6,7 +6,7 @@
 /*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/20 17:49:37 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/28 15:22:52 by trimize          ###   ########.fr       */
+/*   Updated: 2024/10/02 10:06:41 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,15 +14,15 @@
 #include "Response.hpp"
 #include "Request.hpp"
 
-Client::Client() : _response(NULL), _totalBytes(0) {
+Client::Client() : _response(NULL), _server(NULL), _totalBytes(0), contentLength(0), error(false) {
 	_rawRequest = "";
 }
 
-Client::Client(pollfd pollfd, ClientStatus status) : _pollfd(pollfd), _status(status), _response(NULL), _totalBytes(0) {
+Client::Client(pollfd pollfd, ClientStatus status) : _pollfd(pollfd), _status(status), _response(NULL), _server(NULL), _totalBytes(0), contentLength(0), error(false) {
 	_rawRequest = "";
 }
 
-Client::Client(pollfd pollfd, ClientStatus status, Response & response) : _pollfd(pollfd), _status(status), _response(&response), _totalBytes(0) {
+Client::Client(pollfd pollfd, ClientStatus status, Response & response) : _pollfd(pollfd), _status(status), _response(&response), _server(NULL), _totalBytes(0), contentLength(0), error(false) {
 	_rawRequest = "";
 }
 
@@ -78,6 +78,14 @@ void		Client::setTotalBytes(int bytes) {
 	this->_totalBytes = bytes;
 }
 
+bool		Client::getError() {
+	return this->error;
+}
+
+void		Client::setError(bool error) {
+	this->error = error;
+}
+
 
 std::string	Client::getRawRequest() {
 	return _rawRequest;
@@ -85,4 +93,12 @@ std::string	Client::getRawRequest() {
 
 void		Client::setRawRequest(std::string raw) {
 	_rawRequest = raw;
+}
+
+int	Client::getContentLength() {
+	return this->contentLength;;
+}
+
+void		Client::setContentLength(int contentLength) {
+	this->contentLength = contentLength;
 }

@@ -6,7 +6,7 @@
 /*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/07 19:18:24 by trimize           #+#    #+#             */
-/*   Updated: 2024/09/27 21:50:53 by trimize          ###   ########.fr       */
+/*   Updated: 2024/10/02 10:09:16 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -452,16 +452,17 @@ void	ConfigFile::setServer_socket_map(std::map<int, ServerConfig> server_socket_
 	this->server_socket_map = server_socket_map;
 }
 
-Client & ConfigFile::add_to_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd, ServerConfig & server) {
+Client & ConfigFile::add_to_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd, ServerConfig & server)
+{
 	struct pollfd new_element;
 	new_element.fd = fd;
 	new_element.events = POLLIN;
+	new_element.revents = 0;
 	poll_fds.push_back(new_element);
-
-    Client new_client(new_element, READ);
-    new_client.setServer(server);
-    clients.push_back(new_client);
-    return clients.back();
+	Client new_client(new_element, READ);
+	new_client.setServer(server);
+	clients.push_back(new_client);
+	return clients.back();
 }
 
 void ConfigFile::remove_from_poll_fds(std::vector<pollfd> & poll_fds, std::vector<Client> & clients, int fd) {

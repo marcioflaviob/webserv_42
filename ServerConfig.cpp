@@ -6,7 +6,7 @@
 /*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/24 19:24:21 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/09/28 19:50:10 by trimize          ###   ########.fr       */
+/*   Updated: 2024/10/02 09:54:41 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,7 @@ bool ServerConfig::isPathValid(const std::string & path)
 
     for (it = this->routes.begin(); it != this->routes.end(); it++)
     {
-        std::cout << "Comparing " << (*it)->getPath() << " with " << path << std::endl;
+        //std::cout << "Comparing " << (*it)->getPath() << " with " << path << std::endl;
         if ((*it)->getPath() == path)
             return true;
     }
@@ -151,7 +151,7 @@ void	ServerConfig::fillRoutes(std::string str) {
                         route->setIndex("index.html");
                     struct stat info;
                     if (stat(route->getIndex().c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
-                        std::cout << "Index is " << route->getIndex() << std::endl;
+                        //std::cout << "Index is " << route->getIndex() << std::endl;
                         throw ServerConfig::InvalidIndex();
                     }
                 }
