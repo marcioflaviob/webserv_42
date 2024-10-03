@@ -36,7 +36,7 @@ std::string read_data_from_socket(int client_fd);
 Response request_dealer(Request & request);
 void add_to_poll_fds(std::vector<pollfd> & poll_fds, int fd);
 void remove_from_poll_fds(std::vector<pollfd> & poll_fds, int fd);
-void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds, std::string client_ip);
+void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds, const std::string& client_ip);
 // void del_from_poll_fds(struct pollfd **poll_fds, int i, int *poll_count);
 
 int main(void)
@@ -87,7 +87,8 @@ int main(void)
                 if (poll_fds[i].fd == server_socket) {
                     accept_new_connection(server_socket, poll_fds);
                 } else {
-                    handle_client_request(poll_fds[i].fd, poll_fds, "");
+                    std::cout << YELLOW "Has it called the function with the empty str? " RESET << std::endl;
+                    handle_client_request(poll_fds[i].fd, poll_fds, "127.0.0.1");
                 }
             }
 
@@ -154,7 +155,7 @@ int create_server_socket(void) {
     return (socket_fd);
 }
 
-void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds, std::string client_ip) {
+void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds, const std::string& client_ip) {
     std::string buffer = read_data_from_socket(client_fd);
 
     if (buffer.empty()) {
@@ -177,6 +178,7 @@ void handle_client_request(int client_fd, std::vector<pollfd> & poll_fds, std::s
         std::cout << "CGI path is: " << request.getPath() << std::endl;
         if (request.getIsCgi()) {
             CGI cgi(request, request.getPath());
+            std::cout << YELLOW "client_ip/remote addr is: " RESET << client_ip<< std::endl;
             cgi.setEnvVar("REMOTE_ADDR", client_ip);
             response = cgi.executeCGI();
             response.setRequest(request);
@@ -215,13 +217,15 @@ void accept_new_connection(int server_socket, std::vector<pollfd> & poll_fds)
     char client_ip[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, INET_ADDRSTRLEN);
     std::cout << RED"Client connected from addres: " RESET<< client_ip<< std::endl;
+    const std::string remote_addr(client_ip);
+    std::cout << YELLOW "Is client's address still here? " RESET << remote_addr << std::endl;
     // add_to_poll_fds(poll_fds, client_fd, poll_count, poll_size);
 	// poll_fds.push_back({client_fd, POLLIN});
 	add_to_poll_fds(poll_fds, client_fd);
 
 	std::cout << "[Server] Accepted new connection on client socket " << client_fd << std::endl;
-
-	handle_client_request(client_fd, poll_fds, std::string(client_ip));
+    std::cout << YELLOW "Has the remote_addr gotten this far? " RESET << remote_addr << std::endl;
+	handle_client_request(client_fd, poll_fds, remote_addr);
 }
 
 std::string get_directory_path(std::string path) {

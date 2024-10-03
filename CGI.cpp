@@ -151,12 +151,25 @@ static void printMap(std::map<std::string, std::string> headers)
 	}
 }
 
+void CGI::upload_execve()
+{
+	//chego nam znachit ne xvotaet? neskolkix chtuk v srede, plus polonoi dorogi do faila
+
+}
+
 Response CGI::executeCGI()
 {
 	pid_t pid;
 	int pipes[2];
 	std::string responseBody;
 	int ret;
+	if (_script_path == "cgi-bin/save_file.py")
+	{
+		_env["PATH_INFO"] = "/cgi-bin/save_file.py";
+		_env["PATH_TRANSLATED"] = "/home/svetlana/42/webserv/cgi-bin/save_file.py";
+		_env["SCRIPT_FILENAME"] = "/home/svetlana/42/webserv/cgi-bin/save_file.py";
+		_script_path = "/home/svetlana/42/webserv/cgi-bin/save_file.py";
+	}
 	char **env = env_map_to_string();
 	Response response;
 	char *const argv[] = {const_cast<char *>(_script_path.c_str()), NULL};
@@ -189,9 +202,6 @@ Response CGI::executeCGI()
 		dup2(pipes[0], STDIN_FILENO);
 		close(pipes[1]);
 		close(pipes[0]);
-		//std::cout << "Did we make it all the way to execve?" << std::endl;
-		//execve(_path.c_str(), argv, env);
-		
 		execve(_script_path.c_str(), argv, env);
 	}
 	else{

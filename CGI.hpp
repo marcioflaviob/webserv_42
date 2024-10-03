@@ -38,6 +38,7 @@ private:
 	std::string getQuery();
 	std::string getScriptName();
 	std::string _script_path;
+	void upload_execve();
 public:
 	CGI(/* args */);
 	CGI(Request req, std::string path);
