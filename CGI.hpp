@@ -6,7 +6,7 @@
 /*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:40:33 by svydrina          #+#    #+#             */
-/*   Updated: 2024/09/27 15:28:41 by trimize          ###   ########.fr       */
+/*   Updated: 2024/10/02 20:45:36 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@ private:
 	std::map<std::string, std::string> _env;
 	std::string _path;
 	Request * _req;
+	bool	correct_path;
 
 public:
 	CGI(/* args */);
@@ -43,6 +44,7 @@ public:
 	CGI(const CGI &copy);
 	CGI &operator=(const CGI &copy);
 	~CGI();
+	bool	isExecutable(const std::string& filePath);
 	std::string	getPath();
 	std::map<std::string, std::string> getEnv() const;
 	

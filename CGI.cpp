@@ -6,7 +6,7 @@
 /*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:39:55 by svydrina          #+#    #+#             */
-/*   Updated: 2024/10/02 19:49:32 by trimize          ###   ########.fr       */
+/*   Updated: 2024/10/03 12:13:24 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 CGI::CGI(){}
 
-CGI::CGI(Request * req, std::string path): _path(path)
+CGI::CGI(Request * req, std::string path): _path(path), correct_path(true)
 {
 	size_t boundaryPos = req->getHeader("Content-Type").find("boundary=");
 	std::string boundary = "";
@@ -68,7 +68,7 @@ std::string	CGI::getPath()
 	return (this->_path);
 }
 
-bool isExecutable(const std::string& filePath)
+bool CGI::isExecutable(const std::string& filePath)
 {
 	struct stat fileStat;
 	
@@ -76,6 +76,7 @@ bool isExecutable(const std::string& filePath)
 	if (stat(filePath.c_str(), &fileStat) != 0)
 	{
 		std::cerr << "stat failed" << std::endl;
+		this->correct_path = false;
 		return false;
 	}
 	// Check if it's a regular file and if it has execute permissions
@@ -106,15 +107,20 @@ char** CGI::env_map_to_string(){
 
 Response * CGI::executeCGI()
 {
+	this->isExecutable(this->_path);
+	if (!this->correct_path)
+	{
+		std::cout << "passed here" << std::endl;
+		return new Response(NOT_FOUND, _req->getType(), _req);
+	}
 	pid_t pid;
 	int pipes[2];
 	int pipes_2[2];
 	std::string responseBody = "";
-	int ret;
+	//int ret;
 	char **env = env_map_to_string();
 	Response * response = new Response();
-	//std::cout << "This is in cgi :";
-	//std::cout << std::endl << std::endl << "Request Length : " << _req->getRaw() << std::endl << std::endl;
+
 	if(pipe(pipes) == -1)
 	{
 		std::cerr << "Pipe failed" << std::endl;
@@ -133,9 +139,10 @@ Response * CGI::executeCGI()
 	}
 	if (pid == 0)
 	{
-		dup2(pipes[1], 1);
+		// In child process
+		dup2(pipes[1], 1);    // Redirect stdout to pipe
 		close(pipes[1]);
-		dup2(pipes_2[0], 0);
+		dup2(pipes_2[0], 0);  // Redirect stdin from pipe
 		close(pipes_2[0]);
 		close(pipes_2[1]);
 		close(pipes[0]);
@@ -160,33 +167,83 @@ Response * CGI::executeCGI()
 	}
 	else
 	{
+		// In parent process
 		char buffer[BufferSize];
 		int status;
-		write(pipes_2[1], _req->getRaw().c_str(), _req->getRaw().length());
+		write(pipes_2[1], _req->getRaw().c_str(), _req->getRaw().length());  // Send request to child
 		close(pipes_2[1]);
 		close(pipes_2[0]);
 		close(pipes[1]);
-		waitpid(-1, &status, WNOHANG);
-		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-		{
-			std::cerr << "CGI failed" << std::endl;
-			return new Response(INTERNAL_SERVER_ERROR, _req->getType(), _req);
+
+		fd_set set;
+		struct timeval timeout;
+
+		// Set timeout for 5 seconds
+		timeout.tv_sec = 5;
+		timeout.tv_usec = 0;
+
+		int rv;
+		bool timed_out = false;
+
+		// Loop to periodically check for child process termination
+		while (true) {
+			FD_ZERO(&set);          // Clear the set
+			FD_SET(pipes[0], &set); // Add pipe to the set for reading
+
+			// Check if child process has terminated
+			int ret = waitpid(pid, &status, WNOHANG);
+			if (ret == -1) {
+				std::cerr << "waitpid failed" << std::endl;
+				return new Response(INTERNAL_SERVER_ERROR, _req->getType(), _req);
+			}
+			else if (ret > 0) {
+				// Child process exited, check status
+				if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+				{
+					std::cerr << "CGI failed" << std::endl;
+					return new Response(INTERNAL_SERVER_ERROR, _req->getType(), _req);
+				}
+				break;  // Child has finished successfully
+			}
+
+			// Use select to wait for data from the pipe with a timeout
+			rv = select(pipes[0] + 1, &set, NULL, NULL, &timeout);
+
+			if (rv == -1) {
+				std::cerr << "select failed" << std::endl;
+				return new Response(INTERNAL_SERVER_ERROR, _req->getType(), _req);
+			} else if (rv == 0) {
+				// Timeout occurred
+				timed_out = true;
+				break;
+			}
+
+			// If data is ready, read from the pipe
+			if (FD_ISSET(pipes[0], &set)) {
+				ret = read(pipes[0], buffer, BufferSize);
+				if (ret > 0) {
+					responseBody.append(buffer, ret);
+				}
+			}
 		}
-		while ((ret = read(pipes[0], buffer, BufferSize)) > 0)
-		{
-			//memset(buffer, 0, BufferSize);
-			//std::cout << "BUFFER IS: " << buffer << std::endl;
-			responseBody.append(buffer, ret);
-		}
+
 		close(pipes[0]);
-		
+
+		if (timed_out) {
+			// If timeout occurred, kill the child process
+			kill(pid, SIGKILL);
+			std::cerr << "CGI execution timed out" << std::endl;
+			return new Response(GATEWAY_TIMEOUT, _req->getType(), _req);
+		}
 	}
+
+	// Clean up environment
 	for (size_t i = 0; env[i]; i++)
 	{
 		delete [] env[i];
 	}
 	delete [] env;
-	//std::cout << responseBody << std::endl;
+
 	response->setResponse(responseBody);
 	response->setStatus(OK);
 	response->setRequestType(_req->getType());

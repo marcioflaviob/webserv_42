@@ -236,6 +236,9 @@ void handle_client_request(Client & client, std::vector<pollfd> & poll_fds, std:
 			{
 				CGI cgi(request, request->getPath());
 				response = cgi.executeCGI();
+				if (response->getStatus() == NOT_FOUND || response->getStatus() == INTERNAL_SERVER_ERROR || response->getStatus() == BAD_REQUEST || response->getStatus() == GATEWAY_TIMEOUT) {
+					request->setIsCgi(false);
+				}
 				response->setRequest(request);
 				// response.send_cgi_response(client_fd);
 				client.setResponse(response);
