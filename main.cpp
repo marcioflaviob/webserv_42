@@ -66,6 +66,8 @@ int main(void)
         config.add_to_poll_fds(poll_fds, clients, server_socket, config.getServers()[i]);
         server_sockets.push_back(server_socket);
         server_socket_map[server_socket] = config.getServers()[i];
+
+	std::cout << "[Server] Listening on port " << config.getServers()[i].getPort() << std::endl;
     }
 
     // // Create server listening socket
@@ -121,7 +123,7 @@ int main(void)
                     poll_fds[i].events = POLLIN;
                 }
             } else if (poll_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL)) {
-				std::cerr << "[Server] Error on socket " << poll_fds[i].fd << std::endl;
+				//std::cerr << "[Server] Error on socket " << poll_fds[i].fd << std::endl;
 				config.remove_from_poll_fds(poll_fds, clients, poll_fds[i].fd);
 			}
         }
@@ -199,10 +201,17 @@ void handle_client_request(Client & client, std::vector<pollfd> & poll_fds, std:
 	int client_fd = client.getFd();
 	Request * request = new Request();
 	int bytes = read_data_from_socket(client);
-
+	if (bytes == -1 || bytes == 0)
+	{
+		close(client_fd);
+		ConfigFile config = ConfigFile::getInstance();
+		config.remove_from_poll_fds(poll_fds, clients, client_fd);
+		return ;
+	}
 
 	if (client.getRawRequest() == "413 Payload Too Large")
 	{
+		request->setIsCgi(false);
 		Response * responseerror = new Response(PAYLOAD_TOO_LARGE, UNDEFINED, request);
 		client.setResponse(responseerror);
 		client.setStatus(WRITE);
@@ -323,6 +332,10 @@ int	read_data_from_socket(Client & client)
 
 	//setNonBlocking(client.getFd());
 	bytes_read = recv(client.getFd(), buffer, 4096, 0);
+
+	if (bytes_read == -1)
+		return bytes_read;
+
 	client.setTotalBytes(client.getTotalBytes() + bytes_read);
 	client.setRawRequest(client.getRawRequest().append(buffer, bytes_read));
 	if (client.getRawRequest().substr(0, 4) == "POST")

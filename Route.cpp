@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Route.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbrandao <mbrandao@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 21:04:39 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/10/02 20:24:38 by mbrandao         ###   ########.fr       */
+/*   Updated: 2024/10/04 14:48:20 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,7 @@ std::string Route::getHtml(HTTPStatus status, std::string good_path, ServerConfi
 
 		if (!file.is_open()) {
 			//std::cout << "SOMETHING WENT WRONG" << std::endl;
-			return ""; // TODO THROW EXCEPTION MAYBE
+			return "";
 		}
 
 		std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -90,7 +90,7 @@ std::string Route::getHtml(HTTPStatus status, std::string good_path, ServerConfi
 		std::ifstream file(filePath.c_str());
 
 		if (!file.is_open()) {
-			return ""; // TODO THROW EXCEPTION MAYBE
+			return "";
 		}
 
 		std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());

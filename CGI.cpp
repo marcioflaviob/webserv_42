@@ -6,7 +6,7 @@
 /*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 21:39:55 by svydrina          #+#    #+#             */
-/*   Updated: 2024/10/03 12:13:24 by trimize          ###   ########.fr       */
+/*   Updated: 2024/10/04 15:37:58 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,10 +109,7 @@ Response * CGI::executeCGI()
 {
 	this->isExecutable(this->_path);
 	if (!this->correct_path)
-	{
-		std::cout << "passed here" << std::endl;
 		return new Response(NOT_FOUND, _req->getType(), _req);
-	}
 	pid_t pid;
 	int pipes[2];
 	int pipes_2[2];
@@ -245,7 +242,14 @@ Response * CGI::executeCGI()
 	delete [] env;
 
 	response->setResponse(responseBody);
-	response->setStatus(OK);
+	if (_req->getType() == POST)
+		response->setStatus(CREATED);
+	else if (_req->getType() == GET)
+		response->setStatus(OK);
+	else if (_req->getType() == DELETE)
+		response->setStatus(ACCEPTED);
+	else
+		response->setStatus(NOT_IMPLEMENTED);
 	response->setRequestType(_req->getType());
 	return response;
 }

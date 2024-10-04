@@ -6,7 +6,7 @@
 /*   By: trimize <trimize@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 22:20:57 by mbrandao          #+#    #+#             */
-/*   Updated: 2024/10/03 12:05:43 by trimize          ###   ########.fr       */
+/*   Updated: 2024/10/04 15:53:57 by trimize          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,8 @@ std::string	Response::getMessage(HTTPStatus status, int client_fd) {
 			return "HTTP/1.1 503 Service Unavailable\r\nContent-Type: text/html\r\nContent-Length: ";
 		case GATEWAY_TIMEOUT:
 			return "HTTP/1.1 504 Gateway Timeout\r\nCintent-Type: text/html\r\nContent-Length: ";
+		case PAYLOAD_TOO_LARGE:
+			return "HTTP/1.1 413 Content too large\r\nCintent-Type: text/html\r\nContent-Length: ";
 		default:
 			return "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/html\r\nContent-Length: ";
 	}
@@ -113,9 +115,13 @@ void Response::send_cgi_response(int client_fd) {
 	const char* message = finalResponse.c_str();
 
 	int send_status = send(client_fd, message, messageSize, 0);
-	if (send_status == -1) {
-		std::cerr << "[Server] Send error to client " << client_fd << std::endl;
-	}
+	if (send_status == -1 || send_status == 0)
+	{
+		close(client_fd);
+		ConfigFile config = ConfigFile::getInstance();
+		config.remove_from_poll_fds(config.getPoll_fds(), config.getClients(), client_fd);
+		std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
+    	}
 }
 
 RequestType	Response::getRequestType() {
@@ -221,16 +227,16 @@ void Response::send_response(Client & client) {
 
 	setResponse(str);
 	
-	if (getStatus() == OK) {
+	if (getStatus() == OK || getStatus() == ACCEPTED || getStatus() == CREATED) {
 		struct stat info;
 		if (stat(getAdjustedPath().c_str(), &info) != 0 || !S_ISDIR(info.st_mode)) {
-			std::cout << "Path is not a directory" << std::endl;
+			//std::cout << "Path is not a directory" << std::endl;
 			if (!S_ISREG(info.st_mode)) {
 				setAdjustedPath(getRoute()->getIndex());
-				std::cout << "Path is not a file" << std::endl;
+				//std::cout << "Path is not a file" << std::endl;
 			}
 			else {
-				std::cout << "Path is a file" << std::endl;
+				//std::cout << "Path is a file" << std::endl;
 				if (getAdjustedPath()[0] == '/') {
 					setAdjustedPath(getAdjustedPath().substr(1));
 				}
@@ -252,7 +258,7 @@ void Response::send_response(Client & client) {
 				
 				setAdjustedPath(getRoute()->getRoot() + tmp);
 
-				std::cout << "Adjusted path crazy scenario: " << getAdjustedPath() << std::endl;
+				//std::cout << "Adjusted path crazy scenario: " << getAdjustedPath() << std::endl;
 			} else if (S_ISDIR(info.st_mode) /*|| S_ISREG(info.st_mode)*/) {
 				setAdjustedPath(getRoute()->getRoot() + getRoute()->getIndex());
 			}
@@ -272,14 +278,21 @@ void Response::send_response(Client & client) {
 	stat(getAdjustedPath().c_str(), &info);
 
 	if (!S_ISREG(info.st_mode)) {
-		std::cout << "Path is not a file" << std::endl;
+		//std::cout << "Path is not a file" << std::endl;
 	}
 
-	if (this->_route != NULL && this->_route->getIndex() == "*AUTO*" && (!S_ISREG(info.st_mode) || getAdjustedPath() == "index.html")) {
+	if (this->_route != NULL && this->_route->getIndex() == "*AUTO*" && (!S_ISREG(info.st_mode) || getAdjustedPath() == "index.html") && (getStatus() == OK || getStatus() == ACCEPTED || getStatus() == CREATED)) {
 		if (getAdjustedPath() == "index.html")
 			setAdjustedPath(this->_route->getRoot());
 		response = indexHtml(this->_route->getRoot());
 	} else {
+		response = _route->getHtml(getStatus(), getAdjustedPath(), client.getServer());
+	}
+
+	if (response == "") {
+		setStatus(INTERNAL_SERVER_ERROR);
+		std::string tmpstr = getMessage(getStatus(), client_fd);
+		setResponse(tmpstr);
 		response = _route->getHtml(getStatus(), getAdjustedPath(), client.getServer());
 	}
 
@@ -297,18 +310,16 @@ void Response::send_response(Client & client) {
 	const char* message = finalResponse.c_str();
 
 	int send_status = send(client_fd, message, messageSize, 0);
-	if (send_status == -1) {
-		std::cerr << "[Server] Send error to client " << client_fd << std::endl;
-	}
+	// send_status value checked in the next if
 
 	ConfigFile config = ConfigFile::getInstance();
 
-	if (client.getRequest().getHeader("Connection").find("keep-alive") == std::string::npos && !client.getError())
+	if ((client.getRequest().getHeader("Connection").find("keep-alive") == std::string::npos && !client.getError()) || send_status == -1 || send_status == 0)
 	{
 		close(client_fd);
 		config.remove_from_poll_fds(config.getPoll_fds(), config.getClients(), client_fd);
-		//std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
-    }
+		std::cout << "[Server] Closed connection on client socket " << client_fd << std::endl;
+    	}
 	client.setResponse(NULL);
 	if (!client.getError())
 		client.setStatus(DONE);
